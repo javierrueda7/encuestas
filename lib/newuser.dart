@@ -507,14 +507,16 @@ class _AddEditUserState extends State<AddEditUser> {
     }
 
     // Validate password only when admin is false
-    if (widget.admin != true && passwordController.text.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Por favor, ingrese una contraseña.'),
-          duration: Duration(seconds: 4),
-        ),
-      );
-      return false;
+    if (widget.admin != true) {
+      if (passwordController.text.isEmpty || passwordController.text.length < 6) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Por favor, ingrese una contraseña con al menos 6 caracteres.'),
+            duration: Duration(seconds: 4),
+          ),
+        );
+        return false;
+      }
     }
 
     // All validations passed
