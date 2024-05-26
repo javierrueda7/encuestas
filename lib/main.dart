@@ -3,14 +3,21 @@ import 'package:forms_app/mainmenu.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:forms_app/newuser.dart';
 import 'firebase_options.dart';
+import 'dart:async';
 
 Future<void> main() async {
-  WidgetsFlutterBinding.ensureInitialized(); // Ensure that widget binding is initialized
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
+  WidgetsFlutterBinding.ensureInitialized();
+  try {
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
+    print("Firebase initialized successfully");
+  } catch (e) {
+    print("Error initializing Firebase: $e");
+  }
   runApp(EncuestasMOP());
 }
+  
 
 class EncuestasMOP extends StatelessWidget {
   @override

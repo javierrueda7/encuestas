@@ -59,15 +59,66 @@ class _AddEditFormState extends State<AddEditForm> {
   }
 
   Future<void> _loadActiveUsers() async {
+    // Fetch active users snapshot
     activeUsersSnapshot = await FirebaseFirestore.instance
         .collection('Usuarios')
         .where('status', isEqualTo: 'ACTIVO')
         .get();
+    
+    // Initialize position and profession names maps
+    Map<String, String> positionNames = {};
+    Map<String, String> professionNames = {};
+
+    // Fetch positions and professions concurrently
+    final CollectionReference positions = FirebaseFirestore.instance.collection('Cargos');
+    final CollectionReference professions = FirebaseFirestore.instance.collection('Profesiones');
+    final positionQuery = positions.get();
+    final professionQuery = professions.get();
+
+    // Wait for both queries to complete
+    final results = await Future.wait([positionQuery, professionQuery]);
+
+    // Extract position and profession documents
+    final positionDocs = results[0].docs;
+    final professionDocs = results[1].docs;
+
+    // Create maps to store position and profession names
+    positionNames = {
+      for (var document in positionDocs)
+        document.id: (document.data() as Map<String, dynamic>)['name'] as String? ?? 'Unknown Position'
+    };
+    professionNames = {
+      for (var document in professionDocs)
+        document.id: (document.data() as Map<String, dynamic>)['name'] as String? ?? 'Unknown Profession'
+    };
+
+    // Set activeUsers state
     setState(() {
-      activeUsers = activeUsersSnapshot.docs.map((doc) => doc.data() as Map<String, dynamic>).toList(); // Cast to Map<String, dynamic>
+      activeUsers = activeUsersSnapshot.docs.map((doc) {
+        var data = doc.data() as Map<String, dynamic>?;
+
+        // Check if data is null or 'status' field is not present
+        if (data == null || !data.containsKey('status')) {
+          // Set 'status' field to default value 'NO ASIGNADA'
+          data ??= {};
+          data['status'] = 'NO ASIGNADA';
+        }
+
+        // Fetch position and profession names
+        String positionName = positionNames[data['position']] ?? 'Unknown Position';
+        String professionName = professionNames[data['profession']] ?? 'Unknown Profession';
+
+        // Add position and profession names to the data map
+        data['positionName'] = positionName;
+        data['professionName'] = professionName;
+
+        return data;
+      }).toList();
       userSelection = List<bool>.filled(activeUsers.length, false);
     });
   }
+
+
 
   Future<void> _loadSelectedUsers(String id) async {
     var selectedUsersSnapshot = await FirebaseFirestore.instance
@@ -157,7 +208,41 @@ class _AddEditFormState extends State<AddEditForm> {
                   ),
                 ],
               ),
+              SizedBox(height: 20),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 10),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Expanded(
+                      flex: 4,
+                      child: Text('NOMBRE', style: TextStyle(fontWeight: FontWeight.bold),)
+                    ),                       
+                    Expanded(
+                      flex: 4,
+                      child: Text('PROFESIÓN', style: TextStyle(fontWeight: FontWeight.bold),)
+                    ),
+                    Expanded(
+                      flex: 4,
+                      child: Text('CARGO', style: TextStyle(fontWeight: FontWeight.bold),)
+                    ),
+                    Expanded(
+                      flex: 4,
+                      child: Text('SEDE', style: TextStyle(fontWeight: FontWeight.bold),)
+                    ),
+                    Expanded(
+                      flex: 1,
+                      child: Text('ESTADO', style: TextStyle(fontWeight: FontWeight.bold),)
+                    ),
+                    Expanded(
+                      flex: 1,
+                      child: SizedBox()
+                    )
+                  ],
+                ),
+              ),
               SizedBox(height: 10),
+              Divider(),
               Container(
                 constraints: BoxConstraints(maxHeight: 400, maxWidth: 800),
                 child: ListView.builder(
@@ -168,10 +253,26 @@ class _AddEditFormState extends State<AddEditForm> {
                       title: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Text(activeUsers[index]['name']),                       
-                          Text('${activeUsers[index]['profession']}'),
-                          Text('${activeUsers[index]['position']}'),
-                          Text(activeUsers[index]['sede']),  
+                          Expanded(
+                            flex: 3,
+                            child: Text(activeUsers[index]['name'])
+                          ),                       
+                          Expanded(
+                            flex: 3,
+                            child: Text('${activeUsers[index]['professionName']}')
+                          ),
+                          Expanded(
+                            flex: 3,
+                            child: Text('${activeUsers[index]['positionName']}')
+                          ),
+                          Expanded(
+                            flex: 3,
+                            child: Text(activeUsers[index]['sede'])
+                          ),
+                          Expanded(
+                            flex: 1,
+                            child: Text(activeUsers[index]['status'])
+                          )
                         ],
                       ),
                       value: userSelection[index],
@@ -313,7 +414,7 @@ class _AddEditFormState extends State<AddEditForm> {
             var docSnapshot = await collectionReference.doc(widget.id).collection('Usuarios').doc(userId).get();
             if (!docSnapshot.exists) {
               await collectionReference.doc(widget.id).collection('Usuarios').doc(userId).set({
-                  'status': 'ACTIVO',
+                  'status': 'ABIERTA',
               });
             }
           }

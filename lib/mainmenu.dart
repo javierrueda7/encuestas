@@ -19,12 +19,12 @@ class MainMenu extends StatelessWidget {
           children: [
             /*ElevatedButton(
               onPressed: () async {
-                List<String> columnData = await getDataFromExcel('cargos.xlsx', 'Hoja1', 0);
+                List<String> columnData = await getDataFromExcel('prof.xlsx', 'Hoja1', 0);
                 print(columnData);
                 for (var item in columnData) {
                   // Perform your operation here, for example, print the item
                   // ignore: await_only_futures
-                  await saveParameter('Cargos', item, 'ACTIVO');
+                  await saveParameter('Profesiones', item, 'ACTIVO');
                   // You can replace this with your actual operation
                 }
               },

@@ -38,6 +38,15 @@ class _ListUsersScreenState extends State<ListUsersScreen> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
+                  SizedBox(
+                    width: 100,
+                    child: Center(
+                      child: Text(
+                        'ROL',
+                        style: TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                  ),
                   Text(
                     'USUARIOS',
                     style: TextStyle(fontWeight: FontWeight.bold),
@@ -60,7 +69,7 @@ class _ListUsersScreenState extends State<ListUsersScreen> {
                       itemBuilder: (context, index) {
                         final item = snapshot.data?[index];
                         return ListTile(
-                          leading: Text(item?['role'] ?? ''),
+                          leading: SizedBox(width: 100,child: Center(child: Text(item?['role'] ?? ''))),
                           title: Text(item?['name'] ?? ''),
                           subtitle: Text('${item?['position'] ?? ''} | ${item?['sede'] ?? ''}'),
                           trailing: Text(item?['status'] ?? ''),
