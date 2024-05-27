@@ -57,18 +57,30 @@ class _AddEditUserState extends State<AddEditUser> {
 
   Future<void> initPos() async {
     positionsList = await getParamwithId('Cargos');
+    positionsList.sort((a, b) => a.name.trim().compareTo(b.name.trim()));
   }
 
   Future<void> initProf() async {
     professionsList = await getParamwithId('Profesiones');
+    professionsList.sort((a, b) => a.name.trim().compareTo(b.name.trim()));
   }
 
   Future<List<Parametro>> getSugPositions(String query) async {
     List<Parametro> savedCargos = await getParamwithId('Cargos');
     List<Parametro> filteredCargos = savedCargos
-        .where((cargo) => cargo.name.contains(query))
+        .where((cargo) => cargo.name.toLowerCase().contains(query.toLowerCase()))
         .toList();
+    filteredCargos.sort((a, b) => a.name.trim().compareTo(b.name.trim()));
     return filteredCargos;
+  }
+
+  Future<List<Parametro>> getSugProfessions(String query) async {
+    List<Parametro> savedProfesiones = await getParamwithId('Profesiones');
+    List<Parametro> filteredProfesiones = savedProfesiones
+        .where((profesion) => profesion.name.toLowerCase().contains(query.toLowerCase()))
+        .toList();
+    filteredProfesiones.sort((a, b) => a.name.trim().compareTo(b.name.trim()));
+    return filteredProfesiones;
   }
 
   Future<List<Parametro>> getParamwithId(String param) async {
@@ -79,14 +91,7 @@ class _AddEditUserState extends State<AddEditUser> {
     }
     return parametros;
   }
-  
-  Future<List<Parametro>> getSugProfessions(String query) async {
-    List<Parametro> savedProfesiones = await getParamwithId('Profesiones');
-    List<Parametro> filteredProfesiones = savedProfesiones
-        .where((profesion) => profesion.name.contains(query))
-        .toList();
-    return filteredProfesiones;
-  }
+
 
   @override
   void initState() {
@@ -136,7 +141,7 @@ class _AddEditUserState extends State<AddEditUser> {
           nameController.text = userData['name'] ?? '';
           bdayController.text = userData['bday'] ?? '';
           phoneController.text = userData['phone'] ?? '';
-          emailController.text = userData['email'] ?? '';
+          emailController.text = userData['email'].toLowerCase() ?? '';
           professionController.text = profession ?? '';
           positionController.text = position ?? '';
         });
@@ -232,7 +237,7 @@ class _AddEditUserState extends State<AddEditUser> {
               children: [
                 Expanded(child: buildNumberField('CELULAR', phoneController, false)),
                 SizedBox(width: 10),
-                Expanded(child: buildTextField('EMAIL', emailController, widget.id != null ? true : false)),
+                Expanded(child: buildEmailField('EMAIL', emailController, widget.id != null ? true : false)),
               ],
             ),
             SizedBox(height: 10),
@@ -245,7 +250,7 @@ class _AddEditUserState extends State<AddEditUser> {
                       textFieldConfiguration: TextFieldConfiguration(
                         controller: positionController,
                         decoration: InputDecoration(
-                          hintText: 'CARGO',
+                          labelText: 'CARGO',
                           border: OutlineInputBorder(),
                           contentPadding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
                         ),
@@ -284,7 +289,7 @@ class _AddEditUserState extends State<AddEditUser> {
                       textFieldConfiguration: TextFieldConfiguration(
                         controller: professionController,
                         decoration: InputDecoration(                          
-                          hintText: 'PROFESIÓN',                          
+                          labelText: 'PROFESIÓN',                          
                           border: OutlineInputBorder(),
                           contentPadding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),                        
                         ),
@@ -374,7 +379,7 @@ class _AddEditUserState extends State<AddEditUser> {
         // Step 1: Check if email is already in use
         QuerySnapshot querySnapshot = await FirebaseFirestore.instance
             .collection('Usuarios')
-            .where('email', isEqualTo: emailController.text.toUpperCase())
+            .where('email', isEqualTo: emailController.text.toLowerCase())
             .get();
 
         if (querySnapshot.docs.isNotEmpty) {
@@ -403,7 +408,7 @@ class _AddEditUserState extends State<AddEditUser> {
           'bday': bdayController.text.toUpperCase(),
           'gender': selectedGender.toUpperCase(),
           'phone': phoneController.text.toUpperCase(),
-          'email': emailController.text.toUpperCase(),
+          'email': emailController.text.toLowerCase(),
           'position': selectedPositionId?.toUpperCase(),
           'profession': selectedProfessionId?.toUpperCase(),
           'role': selectedRole.toUpperCase(),
@@ -550,7 +555,7 @@ class _AddEditUserState extends State<AddEditUser> {
         'bday': bdayController.text.toUpperCase(),
         'gender': selectedGender.toUpperCase(),
         'phone': phoneController.text.toUpperCase(),
-        'email': emailController.text.toUpperCase(),
+        'email': emailController.text.toLowerCase(),
         'position': selectedPositionId?.toUpperCase(),
         'profession': selectedProfessionId?.toUpperCase(),
         'role': selectedRole.toUpperCase(),

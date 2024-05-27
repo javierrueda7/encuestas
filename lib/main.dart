@@ -50,32 +50,48 @@ class _MainPageState extends State<MainPage> {
       appBar: AppBar(
         title: Center(child: Text('INICIO')),
       ),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            ElevatedButton(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => MainMenu()), // Navigate to the MainMenu
-                );
-              },
-              child: Text('MENÚ PRINCIPAL'),
-            ),
-            SizedBox(height: 10,),
-            ElevatedButton(
-              onPressed: () {
-                showDialog(
-                  context: context,
-                  builder: (BuildContext context) {
-                    return AddEditUser(reloadList: _reloadList, admin: false,);
-                  }
-                );
-              },
-              child: Text('CREAR USUARIO'),
-            ),
-          ],
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Image.asset(
+                'LogoCyMA.png',
+                height: 250,
+              ),
+              SizedBox(height: 30),
+              ElevatedButton(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => MainMenu()), // Navigate to the MainMenu
+                  );
+                },
+                style: ElevatedButton.styleFrom(
+                  padding: EdgeInsets.symmetric(horizontal: 50, vertical: 15),
+                  textStyle: TextStyle(fontSize: 18),
+                ),
+                child: Text('MENÚ PRINCIPAL'),
+              ),
+              SizedBox(height: 20),
+              ElevatedButton(
+                onPressed: () {
+                  showDialog(
+                    context: context,
+                    builder: (BuildContext context) {
+                      return AddEditUser(reloadList: _reloadList, admin: false,);
+                    }
+                  );
+                },
+                style: ElevatedButton.styleFrom(
+                  padding: EdgeInsets.symmetric(horizontal: 50, vertical: 15),
+                  textStyle: TextStyle(fontSize: 18),
+                ),
+                child: Text('CREAR USUARIO'),
+              ),
+            ],
+          ),
         ),
       ),
     );

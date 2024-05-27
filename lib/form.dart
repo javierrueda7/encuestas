@@ -57,6 +57,7 @@ class _FormsPageState extends State<FormsPage> {
 
   Future<void> initPro() async {
     projectsList = await getParamwithId('Proyectos');
+    projectsList.sort((a, b) => a.name.trim().compareTo(b.name.trim()));
   }
 
   Future<void> initAct() async {
@@ -68,6 +69,7 @@ class _FormsPageState extends State<FormsPage> {
     List<Parametro> filteredProjects = savedProjects
         .where((project) => project.name.toLowerCase().contains(query.toLowerCase()))
         .toList();
+    filteredProjects.sort((a, b) => a.name.trim().compareTo(b.name.trim()));
     return filteredProjects;
   }
 
@@ -177,11 +179,11 @@ class _FormsPageState extends State<FormsPage> {
                     children: [
                       Text(
                         'HORAS ESPERADAS: $expectedHours',
-                        style: TextStyle(fontSize: 10,),
+                        style: TextStyle(fontSize: 12,),
                       ),
                       Text(
                         'HORAS REGISTRADAS: $totalHours',
-                        style: TextStyle(fontSize: 10,),
+                        style: TextStyle(fontSize: 12,),
                       ),
                     ],
                   ),
@@ -244,7 +246,7 @@ class _FormsPageState extends State<FormsPage> {
                 ),
                 suggestionsCallback: getSugProjects,
                 onSuggestionSelected: (project) {
-                  setState(() {                          
+                  setState(() {
                     projects[index]['project'] = project.id;
                     projects[index]['projectName'] = project.name;
                     projectController.text = project.name;
@@ -278,7 +280,7 @@ class _FormsPageState extends State<FormsPage> {
                 ),
                 suggestionsCallback: getSugActivities,
                 onSuggestionSelected: (activity) {
-                  setState(() {                          
+                  setState(() {
                     projects[index]['activity'] = activity.id;
                     projects[index]['activityName'] = activity.name;
                     activityController.text = activity.name;
@@ -305,9 +307,9 @@ class _FormsPageState extends State<FormsPage> {
               child: TextFormField(
                 controller: hoursController,
                 readOnly: false,
-                keyboardType: TextInputType.number, // Set keyboard type to number
+                keyboardType: TextInputType.number,
                 inputFormatters: <TextInputFormatter>[
-                  FilteringTextInputFormatter.digitsOnly // Allow only digits
+                  FilteringTextInputFormatter.digitsOnly
                 ],
                 decoration: InputDecoration(
                   labelText: 'HORAS DEDICADAS',
@@ -318,7 +320,12 @@ class _FormsPageState extends State<FormsPage> {
                   setState(() {
                     projects[index]['hours'] = value;
                     updateTotalHours();
-                  });                 
+                    hoursController.value = TextEditingValue(
+                      text: value,
+                      selection: TextSelection.collapsed(offset: value.length),
+                    );
+                  });
+                  
                 },
               ),
             ),
@@ -330,10 +337,10 @@ class _FormsPageState extends State<FormsPage> {
                   updateTotalHours();
                 });
               },
-              icon: Icon(Icons.delete_outline, color: Colors.red,),
+              icon: Icon(Icons.delete_outline, color: Colors.red),
             ),
           ],
-        ),        
+        ),
         Divider(),
       ],
     );

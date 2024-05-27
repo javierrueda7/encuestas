@@ -79,6 +79,30 @@ Widget buildTextField(String label, TextEditingController controller, bool read)
   );
 }
 
+Widget buildEmailField(String label, TextEditingController controller, bool read) {
+  controller.addListener(() {
+    final text = controller.text.toLowerCase();
+    if (controller.text != text) {
+      controller.value = controller.value.copyWith(
+        text: text,
+        selection: TextSelection.collapsed(offset: text.length),
+      );
+    }
+  });
+  return SizedBox(
+    width: 600,
+    child: TextFormField(
+      controller: controller,
+      readOnly: read,
+      decoration: InputDecoration(
+        labelText: label,
+        border: OutlineInputBorder(),
+        contentPadding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+      ),
+    ),
+  );
+}
+
 Widget buildNumberField(String label, TextEditingController controller, bool read) {
   return SizedBox(
     width: 600,
