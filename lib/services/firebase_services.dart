@@ -20,8 +20,6 @@ Future<List<Map<String, dynamic>>> getParametro(String param) async {
   parametroList.sort((a, b) {
     String statusA = a['data']['status'];
     String statusB = b['data']['status'];
-    String nameA = a['data']['name'];
-    String nameB = b['data']['name'];
 
     // First sort by status
     int statusComparison = compareStatus(statusA, statusB);
@@ -29,8 +27,16 @@ Future<List<Map<String, dynamic>>> getParametro(String param) async {
       return statusComparison;
     }
 
-    // Then sort by name if statuses are equal
-    return nameA.compareTo(nameB);
+    // Conditional sorting based on 'param'
+    if (param == 'Actividades') {
+      String idA = a['id'];
+      String idB = b['id'];
+      return idA.compareTo(idB);
+    } else {
+      String nameA = a['data']['name'];
+      String nameB = b['data']['name'];
+      return nameA.compareTo(nameB);
+    }
   });
 
   return parametroList;
