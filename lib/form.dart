@@ -123,7 +123,8 @@ class _FormsPageState extends State<FormsPage> {
   void updateTotalHours() {
     int newTotal = 0;
     for (var project in projects) {
-      if (project['hours'] != null && project['hours'].isNotEmpty) {
+      var temp = project['hours'];
+      if (temp != null && temp.isNotEmpty) {
         newTotal += int.parse(project['hours']);
       }
     }
@@ -317,12 +318,14 @@ class _FormsPageState extends State<FormsPage> {
                   contentPadding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
                 ),
                 onChanged: (value) {
+                  int? newValue = int.tryParse(value);
                   setState(() {
-                    projects[index]['hours'] = value;
+                    projects[index]['hours'] = newValue;
+                    print(projects[index]['hours']);
                     updateTotalHours();
                     hoursController.value = TextEditingValue(
-                      text: value,
-                      selection: TextSelection.collapsed(offset: value.length),
+                      text: newValue.toString(),
+                      selection: TextSelection.collapsed(offset: newValue.toString().length),
                     );
                   });
                   

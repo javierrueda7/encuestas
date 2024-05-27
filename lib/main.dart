@@ -57,7 +57,7 @@ class _MainPageState extends State<MainPage> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Image.asset(
-                'LogoCyMA.png',
+                'images/LogoCyMA.png',
                 height: 250,
               ),
               SizedBox(height: 30),
