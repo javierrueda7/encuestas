@@ -2,44 +2,52 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 
 final FirebaseFirestore db = FirebaseFirestore.instance;
 
-Future<List<Map<String, dynamic>>> getParametro(String param, bool needAll) async {
+Future<List<Map<String, dynamic>>> getParametro(String param) async {
   List<Map<String, dynamic>> parametroList = [];
   final CollectionReference parametros = db.collection(param);
 
-  // Query documents with status='Pendiente'
-  if(needAll){
-    QuerySnapshot pendingParam = await parametros.where('status', isEqualTo: 'PENDIENTE').get();
-    for (var document in pendingParam.docs) {
-      Map<String, dynamic> parametro = {
-        'id': document.id,
-        'data': document.data(),
-      };
-      parametroList.add(parametro);
+  // Query all documents
+  QuerySnapshot allParam = await parametros.get();
+  for (var document in allParam.docs) {
+    Map<String, dynamic> parametro = {
+      'id': document.id,
+      'data': document.data(),
+    };
+    parametroList.add(parametro);
+  }
+
+  // Custom sort function
+  parametroList.sort((a, b) {
+    String statusA = a['data']['status'];
+    String statusB = b['data']['status'];
+    String nameA = a['data']['name'];
+    String nameB = b['data']['name'];
+
+    // First sort by status
+    int statusComparison = compareStatus(statusA, statusB);
+    if (statusComparison != 0) {
+      return statusComparison;
     }
 
-      // Query documents with statuses other than 'Pendiente'
-    QuerySnapshot otherParam = await parametros.where('status', isNotEqualTo: 'PENDIENTE').get();
-    for (var document in otherParam.docs) {
-      Map<String, dynamic> parametro = {
-        'id': document.id,
-        'data': document.data(),
-      };
-      parametroList.add(parametro);
-    }
-  } else{
-      // Query documents with statuses other than 'Pendiente'
-    QuerySnapshot otherParam = await parametros.where('status', isEqualTo: 'ACTIVO').get();
-    for (var document in otherParam.docs) {
-      Map<String, dynamic> parametro = {
-        'id': document.id,
-        'data': document.data(),
-      };
-      parametroList.add(parametro);
-    }
-  }  
+    // Then sort by name if statuses are equal
+    return nameA.compareTo(nameB);
+  });
 
   return parametroList;
 }
+
+int compareStatus(String statusA, String statusB) {
+  const statusOrder = ['PENDIENTE', 'ACTIVO', 'INACTIVO'];
+  int indexA = statusOrder.indexOf(statusA);
+  int indexB = statusOrder.indexOf(statusB);
+
+  // Handle cases where status is not in the predefined list
+  if (indexA == -1) indexA = statusOrder.length;
+  if (indexB == -1) indexB = statusOrder.length;
+
+  return indexA.compareTo(indexB);
+}
+
 
 Future<List<Map<String, dynamic>>> getUsuarios() async {
   List<Map<String, dynamic>> usersList = [];

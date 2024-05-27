@@ -52,7 +52,7 @@ class _ListParameterScreenState extends State<ListParameterScreen> {
             SizedBox(height: 10),
             Expanded(
               child: FutureBuilder(
-                future: getParametro(widget.param, true),
+                future: getParametro(widget.param),
                 builder: ((context, snapshot) {
                   if (snapshot.hasData) {
                     return ListView.builder(
