@@ -17,9 +17,6 @@ class _InitPageState extends State<InitPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Center(child: Text('INICIO')),
-      ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Center(
@@ -30,8 +27,15 @@ class _InitPageState extends State<InitPage> {
                 'assets/images/LogoCyMA.png',
                 height: 250,
               ),
+              const SizedBox(
+                height: 20,
+              ),
+              Text('SISTEMA DE ENCUESTAS MOP', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),),
+              const SizedBox(
+                height: 20,
+              ),
               SizedBox(height: 30),
-              ElevatedButton(
+              /*ElevatedButton(
                 onPressed: () {
                   Navigator.push(
                     context,
@@ -44,7 +48,7 @@ class _InitPageState extends State<InitPage> {
                 ),
                 child: Text('MENÚ PRINCIPAL'),
               ),
-              SizedBox(height: 20),
+              SizedBox(height: 20),*/
               ElevatedButton(
                 onPressed: () {
                   showDialog(

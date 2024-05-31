@@ -1,6 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:forms_app/mainmenu.dart';
+import 'package:forms_app/newuser.dart';
 import 'package:forms_app/resetpassword.dart';
 import 'package:forms_app/services/firebase_services.dart';
 import 'package:forms_app/widgets/forms_widgets.dart';
@@ -23,6 +24,10 @@ class _SignInPageState extends State<SignInPage> {
   void initState() {
     super.initState();
     obtainUsersList();
+  }
+
+  void _reloadList() {
+    setState(() {}); // Empty setState just to trigger rebuild
   }
 
   final TextEditingController _passwordTextcontroller = TextEditingController();
@@ -54,9 +59,16 @@ class _SignInPageState extends State<SignInPage> {
                       'assets/images/LogoCyMA.png',
                       height: 250,
                     ),
+                    const SizedBox(
+                      height: 20,
+                    ),
+                    Text('SISTEMA DE ENCUESTAS MOP', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),),
+                    const SizedBox(
+                      height: 20,
+                    ),
                     Container(
                       constraints: const BoxConstraints(maxWidth: 800),
-                      child: buildEmailField('EMAIL', _emailTextController, false)
+                      child: buildEmailField('EMAIL', _emailTextController, true)
                     ),
                     const SizedBox(
                       height: 20,
@@ -128,6 +140,35 @@ class _SignInPageState extends State<SignInPage> {
                             );
                           }
                         })),
+                    Container(
+                      constraints: const BoxConstraints(maxWidth: 800),                                        
+                      width: MediaQuery.of(context).size.width,
+                      height: 50,
+                      margin: const EdgeInsets.fromLTRB(0, 10, 0, 20),
+                      decoration: BoxDecoration(borderRadius: BorderRadius.circular(90)),
+                      child: ElevatedButton(
+                        onPressed: () {
+                          showDialog(
+                            context: context,
+                            builder: (BuildContext context) {
+                              return AddEditUser(reloadList: _reloadList, admin: false,);
+                            }
+                          );
+                        },
+                        style: ButtonStyle(
+                          backgroundColor: MaterialStateProperty.resolveWith((states) {
+                            if (states.contains(MaterialState.pressed)) {
+                              return Colors.amber;
+                            }
+                            return Colors.amber;
+                          }),
+                          shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+                              RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(30)))),
+                        child: Text('CREAR USUARIO', style: TextStyle(
+                          color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),),
+                      ),
+                    ),
                     const SizedBox(
                       height: 20,
                     ),
