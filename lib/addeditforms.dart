@@ -1,7 +1,10 @@
+// ignore_for_file: deprecated_member_use
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:forms_app/services/firebase_services.dart';
 import 'package:forms_app/widgets/forms_widgets.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class AddEditForm extends StatefulWidget {
   final String? id; // Nullable to differentiate between adding and editing
@@ -63,6 +66,7 @@ class _AddEditFormState extends State<AddEditForm> {
     activeUsersSnapshot = await FirebaseFirestore.instance
         .collection('Usuarios')
         .where('status', isEqualTo: 'ACTIVO')
+        .where('role', isEqualTo: 'USUARIO')
         .get();
     
     // Initialize position and profession names maps
@@ -137,6 +141,31 @@ class _AddEditFormState extends State<AddEditForm> {
       }
     });
   }
+
+  Future<void> manualSendEmail(List<String> recipients, String body) async {
+    const String subject = "";
+    final String _recipients = recipients.join(',');
+
+    // URL encode the body content
+    final String encodedSubject = Uri.encodeComponent(subject);
+    final String encodedBody = Uri.encodeComponent(body);
+
+    final Uri emailLaunchUri = Uri(
+      scheme: 'mailto',
+      path: _recipients,
+      query: 'subject=$encodedSubject&body=$encodedBody',
+    );
+
+    // Use launch() method to open the email client
+    if (await canLaunch(emailLaunchUri.toString())) {
+      await launch(emailLaunchUri.toString());
+    } else {
+      throw 'Could not launch $emailLaunchUri';
+    }
+  }
+
+  List<String> allRecipients = [];  
+  List<String> finalRecipients = [];
 
   @override
   Widget build(BuildContext context) {
@@ -340,6 +369,18 @@ class _AddEditFormState extends State<AddEditForm> {
             });
           }
         });
+        const String body = '''
+          Hola, el área técnica de CyMA te invita a visitar el siguiente link para crear tu cuenta en la nueva plataforma de Encuestas MOP, por favor ingresar y registrar los datos allí solicitados.
+
+          CLICK AQUÍ PARA CREAR USUARIO: https://javierrueda7.github.io/CYMA-EncuestasMOP/
+
+          Cordial saludo,
+
+          Equipo CyMA - Encuestas MOP
+
+          [Imagen: https://i.postimg.cc/RVBSz4B6/Icon-192.png]
+          ''';
+        manualSendEmail(allRecipients, body);
 
         // ignore: use_build_context_synchronously
         ScaffoldMessenger.of(context).showSnackBar(

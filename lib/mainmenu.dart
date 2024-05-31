@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:forms_app/listforms.dart';
 import 'package:forms_app/listparam.dart';
 import 'package:forms_app/listusers.dart';
+import 'package:forms_app/sendemail.dart';
 import 'package:forms_app/userforms.dart';
 /*import 'package:forms_app/loaddata.dart';
 import 'package:forms_app/services/firebase_services.dart';*/
@@ -17,7 +18,20 @@ class MainMenu extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            /*ElevatedButton(
+            
+            SizedBox(height: 20),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => SendEmailPage()),
+                );
+              },
+              child: Text('Enviar invitación'),
+            ),
+            /*
+            SizedBox(height: 20),
+            ElevatedButton(
               onPressed: () async {
                 List<String> columnData = await getDataFromExcel('prof.xlsx', 'Hoja1', 0);
                 print(columnData);
@@ -30,6 +44,7 @@ class MainMenu extends StatelessWidget {
               },
               child: Text('Cargar excel'),
             ),*/
+            SizedBox(height: 20),
             ElevatedButton(
               onPressed: () {
                 Navigator.push(

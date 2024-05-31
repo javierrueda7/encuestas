@@ -99,11 +99,11 @@ class _AddEditUserState extends State<AddEditUser> {
     
     // Initialize state variables with defaults or widget parameters
     userId = widget.id ?? '';
-    selectedIdType = widget.typeId ?? 'TIPO DE DOCUMENTO';
-    selectedGender = widget.gender ?? 'GÉNERO';
+    selectedIdType = widget.typeId ?? 'CÉDULA DE CIUDADANÍA';
+    selectedGender = widget.gender ?? 'MASCULINO';
     selectedStatus = widget.status ?? 'ACTIVO';
     selectedRole = widget.role ?? 'USUARIO';
-    selectedSede = widget.sede ?? 'SEDE';
+    selectedSede = widget.sede ?? 'BUCARAMANGA';
     admin = widget.admin ?? false;
 
     

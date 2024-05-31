@@ -92,6 +92,7 @@ Future<List<Map<String, dynamic>>> getUsuarios() async {
       Map<String, dynamic> usuario = {
         'id': document.id,
         'name': data['name'] ?? '',
+        'email': data['email'] ?? '',
         'role': data['role'] ?? '',
         'status': data['status'] ?? '',
         'gender': data['gender'] ?? '',
