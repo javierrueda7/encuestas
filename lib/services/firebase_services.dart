@@ -158,7 +158,7 @@ Future<List<Map<String, dynamic>>> getEncuestasUser(String searchString) async {
     DocumentSnapshot usuarioDoc = await usuariosCollection.doc(searchString).get();
     
     // If a document with the matching ID is found in the subcollection
-    if (usuarioDoc.exists) {
+    // if (usuarioDoc.exists) {
       // Create a map for the "Encuesta" document
       Map<String, dynamic> encuesta = {
         'id': encuestaDoc.id,
@@ -168,30 +168,28 @@ Future<List<Map<String, dynamic>>> getEncuestasUser(String searchString) async {
       
       // Add the map to the list
       formsList.add(encuesta);
-    }
+    // }
   }
 
   return formsList;
 }
 
 
-Future<void> saveParameter(String param, String nombre, String estado) async {
+Future<String> saveParameter(String param, String nombre, String estado) async {
   // Get a reference to the collection
-  CollectionReference collectionReference =
-      FirebaseFirestore.instance.collection(param);
+  CollectionReference collectionReference = FirebaseFirestore.instance.collection(param);
 
   // Generate a unique ID
   String docId = await idGenerator(collectionReference, param);
 
   // Add the document with the generated ID
-  collectionReference.doc(docId).set({
+  await collectionReference.doc(docId).set({
     'name': nombre.toUpperCase(),
     'status': estado.toUpperCase(),
-  }).then((_) {
-    print('Parameter saved successfully');
-  }).catchError((error) {
-    print('Failed to save parameter: $error');
   });
+
+  print('Parameter saved successfully');
+  return docId; // Return the new document ID
 }
 
 void saveUser(String id, String idType, String name, String phone, String email, String position, String profession, String role, String status) async {

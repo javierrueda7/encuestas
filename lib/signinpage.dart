@@ -68,7 +68,7 @@ class _SignInPageState extends State<SignInPage> {
                     ),
                     Container(
                       constraints: const BoxConstraints(maxWidth: 800),
-                      child: buildEmailField('EMAIL', _emailTextController, true)
+                      child: buildEmailField('EMAIL', _emailTextController, false)
                     ),
                     const SizedBox(
                       height: 20,

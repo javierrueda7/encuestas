@@ -237,7 +237,7 @@ class _AddEditUserState extends State<AddEditUser> {
               children: [
                 Expanded(child: buildNumberField('CELULAR', phoneController, false)),
                 SizedBox(width: 10),
-                Expanded(child: buildEmailField('EMAIL', emailController, widget.id != null ? true : false)),
+                Expanded(child: buildEmailField('EMAIL (TEN PRESENTE QUE SERÁ USADO PARA EL INICIO DE SESIÓN)', emailController, widget.id != null ? true : false)),
               ],
             ),
             SizedBox(height: 10),

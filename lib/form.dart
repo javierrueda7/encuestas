@@ -1,8 +1,12 @@
+// ignore_for_file: prefer_typing_uninitialized_variables
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_typeahead/flutter_typeahead.dart';
 import 'package:forms_app/services/firebase_services.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert' as convert;
 
 class FormsPage extends StatefulWidget {
   final String idForm; // Nullable to differentiate between adding and editing
@@ -33,6 +37,10 @@ class _FormsPageState extends State<FormsPage> {
   String expectedHours = '';
   int totalHours = 0;
 
+  List<TextEditingController> projectControllers = [];
+  List<TextEditingController> activityControllers = [];
+  List<TextEditingController> hoursControllers = [];
+
   // Initialize controllers and data in initState
   @override
   void initState() {
@@ -40,6 +48,12 @@ class _FormsPageState extends State<FormsPage> {
     retrieveData();
     initPro();
     initAct();
+    for (var project in projects) {
+      projectControllers.add(TextEditingController(text: project['projectName']));
+      activityControllers.add(TextEditingController(text: project['activityName']));
+      hoursControllers.add(TextEditingController(text: project['hours']?.toString()));
+    }
+    _formKey = GlobalKey<FormState>();
   }
 
   @override
@@ -52,6 +66,16 @@ class _FormsPageState extends State<FormsPage> {
     positionController.dispose();
     professionController.dispose();
     sedeController.dispose();
+    // Dispose all controllers
+    for (var controller in projectControllers) {
+      controller.dispose();
+    }
+    for (var controller in activityControllers) {
+      controller.dispose();
+    }
+    for (var controller in hoursControllers) {
+      controller.dispose();
+    }
     super.dispose();
   }
 
@@ -120,12 +144,59 @@ class _FormsPageState extends State<FormsPage> {
     }
   }
 
+  void addProject() {
+    setState(() {
+      final newProject = {
+        'projectName': '',
+        'activityName': '',
+        'hours': '0'
+      };
+      projects.add(newProject);
+
+      final projectController = TextEditingController();
+      final activityController = TextEditingController();
+      final hoursController = TextEditingController();
+
+      projectControllers.add(projectController);
+      activityControllers.add(activityController);
+      hoursControllers.add(hoursController);
+
+      // Add listeners to update the projects list
+      projectController.addListener(() {
+        newProject['projectName'] = projectController.text;
+      });
+
+      activityController.addListener(() {
+        newProject['activityName'] = activityController.text;
+      });
+
+      hoursController.addListener(() {
+        newProject['hours'] = hoursController.text;
+        updateTotalHours();
+      });
+    });
+  }
+
+
+  void removeProject(int index) {
+    setState(() {
+      projects.removeAt(index);
+      projectControllers[index].dispose();
+      activityControllers[index].dispose();
+      hoursControllers[index].dispose();
+      projectControllers.removeAt(index);
+      activityControllers.removeAt(index);
+      hoursControllers.removeAt(index);
+      updateTotalHours();
+    });
+  }
+
   void updateTotalHours() {
     int newTotal = 0;
     for (var project in projects) {
       var temp = project['hours'];
-      if (temp != null && temp.isNotEmpty) {
-        newTotal += int.parse(project['hours']);
+      if (temp != null && temp.toString().isNotEmpty) {
+        newTotal += int.parse(temp.toString());
       }
     }
     setState(() {
@@ -143,92 +214,169 @@ class _FormsPageState extends State<FormsPage> {
         padding: EdgeInsets.fromLTRB(300, 50, 300, 50),
         child: SingleChildScrollView(
           padding: EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Row(
-                children: [
-                  Expanded(child: buildTextField('TIPO DE DOCUMENTO', idTypeController, true)),            
-                  SizedBox(width: 10),
-                  Expanded(child: buildTextField('NÚMERO DE IDENTIFICACIÓN', idController, true)),
-                  SizedBox(width: 10),
-                  Expanded(child: buildTextField('SEDE', sedeController, true)),
-                ],
-              ),
-              SizedBox(height: 10),
-              buildTextField('NOMBRE', nameController, true),
-              SizedBox(height: 10),
-              Row(
-                children: [
-                  Expanded(child: buildTextField('ROL', roleController, true)),
-                  SizedBox(width: 10),            
-                  Expanded(child: buildTextField('CARGO', positionController, true)),
-                  SizedBox(width: 10),            
-                  Expanded(child: buildTextField('PROFESIÓN', professionController, true)),
-                ],
-              ),
-              SizedBox(height: 20),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    'LISTA DE ACTIVIDADES',
-                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                  ),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: [
-                      Text(
-                        'HORAS ESPERADAS: $expectedHours',
-                        style: TextStyle(fontSize: 12,),
-                      ),
-                      Text(
-                        'HORAS REGISTRADAS: $totalHours',
-                        style: TextStyle(fontSize: 12,),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-              SizedBox(height: 10),
-              ListView.builder(
-                shrinkWrap: true,
-                itemCount: projects.length,
-                itemBuilder: (context, index) {
-                  return buildProjectItem(index);
-                },
-              ),
-              SizedBox(height: 10),
-              ElevatedButton(
-                onPressed: () {
-                  setState(() {
-                    projects.add({});
-                  });
-                },
-                child: Text('AGREGAR ACTIVIDAD'),
-              ),
-              SizedBox(height: 20),
-              ElevatedButton(
-                onPressed: () {
-                  // Print all elements of the projects list
-                  for (var project in projects) {
-                    print(project);
-                  }
-                  // Implement submit functionality
-                },
-                child: Text('ENVIAR'),
-              ),
-            ],
+          child: Form(
+            key: _formKey,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Row(
+                  children: [
+                    Expanded(child: buildTextField('TIPO DE DOCUMENTO', idTypeController, true)),            
+                    SizedBox(width: 10),
+                    Expanded(child: buildTextField('NÚMERO DE IDENTIFICACIÓN', idController, true)),
+                    SizedBox(width: 10),
+                    Expanded(child: buildTextField('SEDE', sedeController, true)),
+                  ],
+                ),
+                SizedBox(height: 10),
+                buildTextField('NOMBRE', nameController, true),
+                SizedBox(height: 10),
+                Row(
+                  children: [
+                    Expanded(child: buildTextField('ROL', roleController, true)),
+                    SizedBox(width: 10),            
+                    Expanded(child: buildTextField('CARGO', positionController, true)),
+                    SizedBox(width: 10),            
+                    Expanded(child: buildTextField('PROFESIÓN', professionController, true)),
+                  ],
+                ),
+                SizedBox(height: 20),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'LISTA DE ACTIVIDADES',
+                      style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                    ),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        Text(
+                          'HORAS ESPERADAS: $expectedHours',
+                          style: TextStyle(fontSize: 12,),
+                        ),
+                        Text(
+                          'HORAS REGISTRADAS: $totalHours',
+                          style: TextStyle(fontSize: 12,),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+                SizedBox(height: 10),
+                ListView.builder(
+                  shrinkWrap: true,
+                  itemCount: projects.length,
+                  itemBuilder: (context, index) {
+                    return buildProjectItem(index);
+                  },
+                ),
+                SizedBox(height: 10),
+                ElevatedButton(
+                  onPressed: addProject,
+                  child: Text('AGREGAR ACTIVIDAD'),
+                ),
+                SizedBox(height: 20),
+                ElevatedButton(
+                  onPressed: () async {
+                    bool toReview = false;
+                    // First, update the projects list with the latest controller values
+                    setState(() {
+                      for (int i = 0; i < projects.length; i++) {
+                        projects[i]['projectName'] = projectControllers[i].text;
+                        projects[i]['activityName'] = activityControllers[i].text;
+                        projects[i]['hours'] = hoursControllers[i].text;
+                      }
+                    });
+            
+                    // Then, handle new projects and activities
+                    for (var project in projects) {
+                      if (!projectsList.any((p) => p.name == project['projectName'])) {
+                        String newProjectId = await saveParameter('Proyectos', project['projectName'], 'PENDIENTE');
+                        project['project'] = newProjectId;
+                        toReview = true;
+                      } else {
+                        project['project'] = projectsList.firstWhere((p) => p.name == project['projectName']).id;
+                      }
+            
+                      if (!activitiesList.any((a) => a.name == project['activityName'])) {
+                        String newActivityId = await saveParameter('Actividades', project['activityName'], 'PENDIENTE');
+                        project['activity'] = newActivityId;
+                        toReview = true;
+                      } else {
+                        project['activity'] = activitiesList.firstWhere((a) => a.name == project['activityName']).id;
+                      }
+                    }
+            
+                    // Print all elements of the projects list with updated IDs
+                    for (var project in projects) {
+                      print("?proyecto=${project['project']}&actividad=${project['activity']}&horas=${project['hours']}");
+                    }
+                    _submitForm();
+                    if(toReview){
+                      for(var project in projects){
+            
+                      }
+            
+                    } else {
+            
+                    }
+            
+                    // Implement additional submit functionality here (e.g., saving to Firestore)
+                  },
+                  child: Text('ENVIAR'),
+                ),
+            
+              ],
+            ),
           ),
         ),
       ),
     );
   }
+  late final _formKey;
+  void _submitForm() async {
+  const String scriptURL = 'https://script.google.com/macros/s/AKfycbx2TOqfJJn9hqp0lqekUGIrlNC1gtRn61ABXf3tKG7_5B2WAQiRvcPTv6iCesuz5znfCw/exec';
+
+  for (var project in projects) {
+    String queryString = "?proyecto=${project['project']}&actividad=${project['activity']}&horas=${project['hours']}&sheetName=${widget.formName}";
+
+    var finalURI = Uri.parse(scriptURL + queryString);
+    var response = await http.get(finalURI);
+    //print(finalURI);
+
+    if (response.statusCode == 200) {
+      var bodyR = convert.jsonDecode(response.body);
+      print(bodyR);
+    }
+  }
+}
+
 
   Widget buildProjectItem(int index) {
-    TextEditingController projectController = TextEditingController(text: projects[index]['projectName'] ?? '');
-    TextEditingController activityController = TextEditingController(text: projects[index]['activityName'] ?? '');
-    TextEditingController hoursController = TextEditingController(text: projects[index]['hours'] ?? '');
+    TextEditingController projectController = projectControllers[index];
+    TextEditingController activityController = activityControllers[index];
+    TextEditingController hoursController = hoursControllers[index];
+
+    projectController.addListener(() {
+      final text = projectController.text.toUpperCase();
+      if (projectController.text != text) {
+        projectController.value = projectController.value.copyWith(
+          text: text,
+          selection: TextSelection.collapsed(offset: text.length),
+        );
+      }
+    });
+
+    activityController.addListener(() {
+      final text = activityController.text.toUpperCase();
+      if (activityController.text != text) {
+        activityController.value = activityController.value.copyWith(
+          text: text,
+          selection: TextSelection.collapsed(offset: text.length),
+        );
+      }
+    });
 
     return Column(
       children: [
@@ -237,36 +385,47 @@ class _FormsPageState extends State<FormsPage> {
           children: [
             Expanded(
               child: TypeAheadFormField<Parametro>(
-                textFieldConfiguration: TextFieldConfiguration(
-                  controller: projectController,
-                  decoration: InputDecoration(
-                    hintText: 'PROYECTO',
-                    border: OutlineInputBorder(),
-                    contentPadding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
-                  ),
+              textFieldConfiguration: TextFieldConfiguration(
+                controller: projectController,
+                decoration: InputDecoration(
+                  labelText: 'PROYECTO',
+                  border: OutlineInputBorder(),
+                  contentPadding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
                 ),
-                suggestionsCallback: getSugProjects,
-                onSuggestionSelected: (project) {
-                  setState(() {
-                    projects[index]['project'] = project.id;
-                    projects[index]['projectName'] = project.name;
-                    projectController.text = project.name;
-                  });
-                },
-                autovalidateMode: AutovalidateMode.always,
-                validator: (proyecto) {
-                  if (proyecto!.isEmpty || !projectsList.any((project) => project.name == proyecto)) {
-                    return 'SELECCIONE UN PROYECTO DE LA LISTA';
-                  } else {
-                    return null;
-                  }
-                },
-                itemBuilder: (context, project) {
-                  return ListTile(
-                    title: Text(project.name),
-                  );
-                },
               ),
+              suggestionsCallback: getSugProjects,
+              onSuggestionSelected: (project) {
+                setState(() {
+                  projects[index]['project'] = project.id;
+                  projects[index]['projectName'] = project.name;
+                  projectController.text = project.name;
+                });
+              },
+              autovalidateMode: AutovalidateMode.always,
+              validator: (proyecto) {
+                if (proyecto!.isEmpty) {
+                  return 'SELECCIONE UN PROYECTO DE LA LISTA';
+                } else if (!projectsList.any((project) => project.name == proyecto)) {
+                  return 'PENDIENTE DE REVISIÓN POR UN ADMINISTRADOR';
+                } else {
+                  return null;
+                }
+              },
+              itemBuilder: (context, project) {
+                return ListTile(
+                  title: Text(project.name),
+                );
+              },
+              onSaved: (proyecto) async {
+                if (proyecto != null && !projectsList.any((project) => project.name == proyecto)) {
+                  await saveParameter('Proyectos', proyecto, 'PENDIENTE');
+                  projectsList.add(Parametro(id: DateTime.now().toString(), name: proyecto)); // Temporarily add the new project
+                }
+              },
+              noItemsFoundBuilder: (context) {
+                return const SizedBox.shrink();
+              },
+            ),
             ),
             SizedBox(width: 10),
             Expanded(
@@ -274,7 +433,7 @@ class _FormsPageState extends State<FormsPage> {
                 textFieldConfiguration: TextFieldConfiguration(
                   controller: activityController,
                   decoration: InputDecoration(
-                    hintText: 'ACTIVIDAD',
+                    labelText: 'ACTIVIDAD',
                     border: OutlineInputBorder(),
                     contentPadding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
                   ),
@@ -289,8 +448,10 @@ class _FormsPageState extends State<FormsPage> {
                 },
                 autovalidateMode: AutovalidateMode.always,
                 validator: (activity) {
-                  if (activity!.isEmpty || !activitiesList.any((act) => act.name == activity)) {
+                  if (activity!.isEmpty) {
                     return 'SELECCIONE UNA ACTIVIDAD DE LA LISTA';
+                  } else if (!activitiesList.any((act) => act.name == activity)) {
+                    return 'PENDIENTE DE REVISIÓN POR UN ADMINISTRADOR';
                   } else {
                     return null;
                   }
@@ -299,6 +460,15 @@ class _FormsPageState extends State<FormsPage> {
                   return ListTile(
                     title: Text(activity.name),
                   );
+                },
+                onSaved: (activity) async {
+                  // Save the ocupacion to Firebase if it's a new value
+                  if (!activitiesList.any((act) => act.name == activity)) {
+                    saveParameter('Actividades', activity!, 'PENDIENTE');
+                  }
+                },
+                noItemsFoundBuilder: (context) {
+                  return const SizedBox.shrink();
                 },
               ),
             ),
@@ -320,25 +490,21 @@ class _FormsPageState extends State<FormsPage> {
                 onChanged: (value) {
                   int? newValue = int.tryParse(value);
                   setState(() {
-                    projects[index]['hours'] = newValue;
-                    print(projects[index]['hours']);
+                    projects[index]['hours'] = newValue?.toString(); // Store as String to avoid type issues
                     updateTotalHours();
-                    hoursController.value = TextEditingValue(
-                      text: newValue.toString(),
-                      selection: TextSelection.collapsed(offset: newValue.toString().length),
-                    );
                   });
-                  
+                  // Preserve cursor position
+                  hoursController.value = hoursController.value.copyWith(
+                    text: value,
+                    selection: TextSelection.collapsed(offset: value.length),
+                  );
                 },
               ),
             ),
             SizedBox(height: 10),
             IconButton(
               onPressed: () {
-                setState(() {
-                  projects.removeAt(index);
-                  updateTotalHours();
-                });
+                removeProject(index);
               },
               icon: Icon(Icons.delete_outline, color: Colors.red),
             ),

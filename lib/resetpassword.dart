@@ -1,3 +1,5 @@
+// ignore_for_file: use_build_context_synchronously
+
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:forms_app/widgets/forms_widgets.dart';
@@ -47,12 +49,36 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
               ),
               Container(
                 constraints: const BoxConstraints(maxWidth: 800),
-                child: firebaseButton(context, "RECUPERAR CONTRASEÑA", () {
-                  FirebaseAuth.instance
-                      .sendPasswordResetEmail(
-                          email: _emailTextController.text)
-                      .then((value) => Navigator.of(context).pop());
-                }),
+                child: firebaseButton(context, "RECUPERAR CONTRASEÑA", () async {
+                  try {
+                    await FirebaseAuth.instance.sendPasswordResetEmail(email: _emailTextController.text);
+                    // Use mounted to ensure the context is still valid
+                    if (context.mounted) {
+                      Navigator.of(context).pop();
+                    }
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(
+                          'Se ha enviado un correo para restablecer la contraseña.',
+                          style: TextStyle(color: Colors.white),
+                        ),
+                        duration: Duration(seconds: 4),
+                        backgroundColor: Colors.green,
+                      ),
+                    );
+                  } catch (error) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(
+                          'Hubo un error al enviar el correo de restablecimiento.',
+                          style: TextStyle(color: Colors.white),
+                        ),
+                        duration: Duration(seconds: 4),
+                        backgroundColor: Colors.red,
+                      ),
+                    );
+                  }
+                })
               )
             ]),
           ),
