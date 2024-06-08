@@ -24,7 +24,7 @@ class MyApp extends StatelessWidget {
       title: 'CYMA - ENCUESTAS MOP',
       initialRoute: '/',
       routes: {
-        '/': (context) => InitPage(),
+        '/': (context) => SignInPage(),
       },
     );
   }

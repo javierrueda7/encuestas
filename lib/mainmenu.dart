@@ -1,4 +1,7 @@
+// ignore_for_file: library_private_types_in_public_api, unrelated_type_equality_checks
+
 import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
 import 'package:forms_app/listforms.dart';
 import 'package:forms_app/listparam.dart';
 import 'package:forms_app/listusers.dart';
@@ -7,7 +10,23 @@ import 'package:forms_app/userforms.dart';
 import 'package:forms_app/loaddata.dart';
 import 'package:forms_app/services/firebase_services.dart';
 
-class MainMenu extends StatelessWidget {
+class MainMenu extends StatefulWidget {
+  final String? role;
+  MainMenu({super.key, required this.role});
+  @override
+  _MainMenuState createState() => _MainMenuState();
+}
+
+class _MainMenuState extends State<MainMenu> {
+  String role = 'ANON';
+
+  @override
+  void initState() {
+    super.initState();
+    role = widget.role ?? role;
+  }
+
+  
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -43,76 +62,90 @@ class MainMenu extends StatelessWidget {
                 }
               },
               child: Text('Cargar excel'),
-            ),*/
-            SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => ListUserForms()),
-                );
-              },
-              child: Text('RESPONDER ENCUESTA'),
+            ),*/            
+            Visibility(
+              visible: role != 'ADMINISTRADOR',
+              child: Column(
+                children: [
+                  SizedBox(height: 20),
+                  ElevatedButton(
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => ListUserForms()),
+                      );
+                    },
+                    child: Text('RESPONDER ENCUESTA'),
+                  ),
+                ],
+              ),
             ),
-            SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => ListFormsScreen()), // Navigate to the NewUserPage
-                );
-              },
-              child: Text('ADMINISTRAR ENCUESTAS'),
-            ),
-            SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => ListUsersScreen()), // Navigate to the NewUserPage
-                );
-              },
-              child: Text('ADMINISTRAR USUARIOS'),
-            ),
-            SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => ListParameterScreen(param: 'Proyectos')),
-                );
-              },
-              child: Text('ADMINISTRAR PROYECTOS'),
-            ),
-            SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => ListParameterScreen(param: 'Actividades')),
-                );
-              },
-              child: Text('ADMINISTRAR ACTIVIDADES'),
-            ),
-            SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => ListParameterScreen(param: 'Cargos')),
-                );
-              },
-              child: Text('ADMINISTRAR CARGOS'),
-            ),
-            SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => ListParameterScreen(param: 'Profesiones')),
-                );
-              },
-              child: Text('ADMINISTRAR PROFESIONES'),
+            Visibility(
+              visible: role != 'USUARIO',
+              child: Column(
+                children: [
+                  SizedBox(height: 20),
+                  ElevatedButton(
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => ListFormsScreen()), // Navigate to the NewUserPage
+                      );
+                    },
+                    child: Text('ADMINISTRAR ENCUESTAS'),
+                  ),
+                  SizedBox(height: 20),
+                  ElevatedButton(
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => ListUsersScreen()), // Navigate to the NewUserPage
+                      );
+                    },
+                    child: Text('ADMINISTRAR USUARIOS'),
+                  ),
+                  SizedBox(height: 20),
+                  ElevatedButton(
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => ListParameterScreen(param: 'Proyectos')),
+                      );
+                    },
+                    child: Text('ADMINISTRAR PROYECTOS'),
+                  ),
+                  SizedBox(height: 20),
+                  ElevatedButton(
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => ListParameterScreen(param: 'Actividades')),
+                      );
+                    },
+                    child: Text('ADMINISTRAR ACTIVIDADES'),
+                  ),
+                  SizedBox(height: 20),
+                  ElevatedButton(
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => ListParameterScreen(param: 'Cargos')),
+                      );
+                    },
+                    child: Text('ADMINISTRAR CARGOS'),
+                  ),
+                  SizedBox(height: 20),
+                  ElevatedButton(
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => ListParameterScreen(param: 'Profesiones')),
+                      );
+                    },
+                    child: Text('ADMINISTRAR PROFESIONES'),
+                  ),
+                ],
+              ),
             ),
           ],
         ),

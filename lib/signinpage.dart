@@ -17,7 +17,7 @@ class _SignInPageState extends State<SignInPage> {
   List users = [];
 
   void obtainUsersList() async {
-    users = await getUsuarios();
+    users = await validLogin();
   }
   
   @override
@@ -89,7 +89,7 @@ class _SignInPageState extends State<SignInPage> {
                     const SizedBox(
                       height: 10,
                     ),
-                    beAGuest(),
+                    // beAGuest(),
                     const SizedBox(
                       height: 10,
                     ),
@@ -102,8 +102,13 @@ class _SignInPageState extends State<SignInPage> {
                             (user) => user['email'] == email,
                             orElse: () => null,
                           );
+                          print(1);
+                          print(userWithEmail);
+                          print (userWithEmail['status']);
+                          String rol = userWithEmail['role'];
                           if (userWithEmail != null &&
                                   userWithEmail['status'] == 'ACTIVO') {
+                                    print(2);
                             // Allow login
                             FirebaseAuth.instance
                                 .signInWithEmailAndPassword(
@@ -111,7 +116,7 @@ class _SignInPageState extends State<SignInPage> {
                                 .then((value) {
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(
-                                  content: Text('Inicio de sesión satisfactorio.', style: TextStyle(color: Colors.black)),
+                                  content: Text('Bienvenid@ ${userWithEmail['name']}, inicio de sesión satisfactorio.', style: TextStyle(color: Colors.black)),
                                   duration: Duration(seconds: 4),
                                   backgroundColor: Color.fromRGBO(52, 194, 64, 1),
                                 ),
@@ -119,12 +124,12 @@ class _SignInPageState extends State<SignInPage> {
                               Navigator.push(
                                   context,
                                   MaterialPageRoute(
-                                      builder: (context) => MainMenu()));
+                                      builder: (context) => MainMenu(role: rol,)));
                             // ignore: sdk_version_since
                             }).onError((error, stackTrace) {
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(
-                                  content: Text('Sus datos no coinciden con nuestra información, verifíquelos o cree una cuenta.', style: TextStyle(color: Colors.white),),
+                                  content: Text('Tus datos no coinciden con nuestra información, verifícalos o crea una cuenta.', style: TextStyle(color: Colors.white),),
                                   duration: Duration(seconds: 4),
                                   backgroundColor: Color.fromRGBO(214, 66, 66, 1),
                                 ),
@@ -133,7 +138,7 @@ class _SignInPageState extends State<SignInPage> {
                           } else {
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
-                                content: Text('Sus datos no coinciden con nuestra información, verifíquelos o cree una cuenta.', style: TextStyle(color: Colors.white),),
+                                content: Text('Tus datos no coinciden con nuestra información, verifícalos o crea una cuenta.', style: TextStyle(color: Colors.white),),
                                 duration: Duration(seconds: 4),
                                 backgroundColor: Color.fromRGBO(214, 66, 66, 1),
                               ),
@@ -210,7 +215,7 @@ class _SignInPageState extends State<SignInPage> {
         onTap: () {
           FirebaseAuth.instance.signInAnonymously().then((value) {
             Navigator.push(context,
-                MaterialPageRoute(builder: (context) => MainMenu()));
+                MaterialPageRoute(builder: (context) => MainMenu(role: 'ANONIMO',)));
           // ignore: sdk_version_since
           }).onError((error, stackTrace) {});
         },

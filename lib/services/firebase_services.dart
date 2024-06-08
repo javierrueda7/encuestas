@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 final FirebaseFirestore db = FirebaseFirestore.instance;
 
@@ -54,6 +55,46 @@ int compareStatus(String statusA, String statusB) {
   return indexA.compareTo(indexB);
 }
 
+Future<List> validLogin() async {
+  List users = [];
+  QuerySnapshot? queryUsers = await db.collection('Usuarios').get();
+  for (var doc in queryUsers.docs) {
+    final Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
+    if (data['status'] != 'INACTIVO') {
+      final user = {
+        "uid": doc.id,
+        "name": data['name'],
+        "email": data['email'],
+        "status": data['status'],
+        "role": data['role'],
+      };
+      users.add(user);
+    }
+  }
+  return users;
+}
+
+Future<String> getUserRole() async {
+  // Obtener el usuario autenticado
+  User? user = FirebaseAuth.instance.currentUser;
+
+  if (user != null) {
+    // Obtener el ID del usuario
+    String userId = user.uid;
+
+    // Buscar el documento en la colección "Usuarios"
+    DocumentSnapshot userDoc = await FirebaseFirestore.instance.collection('Usuarios').doc(userId).get();
+
+    if (userDoc.exists) {
+      // Retornar el campo 'rol'
+      return userDoc['rol'];
+    } else {
+      throw Exception('Documento de usuario no encontrado');
+    }
+  } else {
+    throw Exception('No hay un usuario autenticado');
+  }
+}
 
 Future<List<Map<String, dynamic>>> getUsuarios() async {
   List<Map<String, dynamic>> usersList = [];
