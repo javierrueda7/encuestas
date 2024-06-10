@@ -1,7 +1,6 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:forms_app/firebase_options.dart';
-import 'package:forms_app/initpage.dart';
 import 'package:forms_app/signinpage.dart';
 
 // Pages

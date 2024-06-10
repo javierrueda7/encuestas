@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:forms_app/mainmenu.dart';
 import 'package:forms_app/newuser.dart';
 
 class InitPage extends StatefulWidget {

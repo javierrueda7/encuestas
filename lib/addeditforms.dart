@@ -1,4 +1,4 @@
-// ignore_for_file: deprecated_member_use
+// ignore_for_file: library_private_types_in_public_api, deprecated_member_use, use_build_context_synchronously
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
@@ -15,10 +15,17 @@ class AddEditForm extends StatefulWidget {
   final String? status;
   final VoidCallback reloadList;
 
-  AddEditForm({this.id, this.name, this.startDate, this.endDate, this.days, this.status, required this.reloadList});
+  AddEditForm({
+    this.id,
+    this.name,
+    this.startDate,
+    this.endDate,
+    this.days,
+    this.status,
+    required this.reloadList,
+  });
 
   @override
-  // ignore: library_private_types_in_public_api
   _AddEditFormState createState() => _AddEditFormState();
 }
 
@@ -27,14 +34,15 @@ class _AddEditFormState extends State<AddEditForm> {
   late TextEditingController startDateController;
   late TextEditingController endDateController;
   late TextEditingController daysController;
+  final CollectionReference encuestas = FirebaseFirestore.instance.collection('Encuestas');
 
-  List<Map<String, dynamic>> activeUsers = []; // Corrected type declaration
+  List<Map<String, dynamic>> activeUsers = [];
   List<bool> userSelection = [];
   bool selectAll = false;
   String selectedStatus = 'ACTIVA';
   List<String> selectedUsers = [];
   TextEditingController hoursController = TextEditingController();
-
+  List<String> selectedEmails = [];
   final List<String> statuses = ['ACTIVA', 'CERRADA'];
   late QuerySnapshot activeUsersSnapshot;
 
@@ -54,39 +62,49 @@ class _AddEditFormState extends State<AddEditForm> {
         startDateController.text = widget.startDate ?? '';
         endDateController.text = widget.endDate ?? '';
         daysController.text = widget.days ?? '';
-        selectedStatus = widget.status ?? '';
-        hoursController.text = (((int.parse(daysController.text))*9).toString());
+        selectedStatus = widget.status ?? 'ACTIVA';
+        hoursController.text = (((int.parse(daysController.text)) * 9).toString());
       });
-      _loadSelectedUsers(widget.id!);
+    } else {
+      setState(() {
+        selectAll = true;
+        // Retrieve all emails of active users
+        _loadAllUserEmails();
+      });
     }
   }
 
+
+  Future<void> _loadAllUserEmails() async {
+    // Fetch all users from the collection
+    var allUsersSnapshot = await FirebaseFirestore.instance.collection('Usuarios').get();
+    // Extract and store their emails in selectedEmails list
+    setState(() {
+      selectedEmails = allUsersSnapshot.docs.map((doc) => doc['email'].toString()).toList();
+      // Populate selectedUsers with all active user IDs
+      selectedUsers = allUsersSnapshot.docs.map<String>((doc) => doc.id).toList();
+    });
+  }
+
   Future<void> _loadActiveUsers() async {
-    // Fetch active users snapshot
     activeUsersSnapshot = await FirebaseFirestore.instance
         .collection('Usuarios')
         .where('status', isEqualTo: 'ACTIVO')
         .where('role', isEqualTo: 'USUARIO')
         .get();
-    
-    // Initialize position and profession names maps
+
     Map<String, String> positionNames = {};
     Map<String, String> professionNames = {};
 
-    // Fetch positions and professions concurrently
     final CollectionReference positions = FirebaseFirestore.instance.collection('Cargos');
     final CollectionReference professions = FirebaseFirestore.instance.collection('Profesiones');
     final positionQuery = positions.get();
     final professionQuery = professions.get();
-
-    // Wait for both queries to complete
     final results = await Future.wait([positionQuery, professionQuery]);
 
-    // Extract position and profession documents
     final positionDocs = results[0].docs;
     final professionDocs = results[1].docs;
 
-    // Create maps to store position and profession names
     positionNames = {
       for (var document in positionDocs)
         document.id: (document.data() as Map<String, dynamic>)['name'] as String? ?? 'Unknown Position'
@@ -96,33 +114,33 @@ class _AddEditFormState extends State<AddEditForm> {
         document.id: (document.data() as Map<String, dynamic>)['name'] as String? ?? 'Unknown Profession'
     };
 
-    // Set activeUsers state
     setState(() {
       activeUsers = activeUsersSnapshot.docs.map((doc) {
         var data = doc.data() as Map<String, dynamic>?;
 
-        // Check if data is null or 'status' field is not present
         if (data == null || !data.containsKey('status')) {
-          // Set 'status' field to default value 'NO ASIGNADA'
           data ??= {};
           data['status'] = 'NO ASIGNADA';
         }
 
-        // Fetch position and profession names
         String positionName = positionNames[data['position']] ?? 'Unknown Position';
         String professionName = professionNames[data['profession']] ?? 'Unknown Profession';
 
-        // Add position and profession names to the data map
         data['positionName'] = positionName;
         data['professionName'] = professionName;
 
         return data;
       }).toList();
+
       userSelection = List<bool>.filled(activeUsers.length, false);
+
+      if (widget.id != null) {
+        _loadSelectedUsers(widget.id!);
+      } else {
+        userSelection = List<bool>.filled(activeUsers.length, true);
+      }
     });
   }
-
-
 
   Future<void> _loadSelectedUsers(String id) async {
     var selectedUsersSnapshot = await FirebaseFirestore.instance
@@ -137,16 +155,17 @@ class _AddEditFormState extends State<AddEditForm> {
         if (selectedUsersIds.contains(activeUsersSnapshot.docs[i].id)) {
           userSelection[i] = true;
           selectedUsers.add(activeUsersSnapshot.docs[i].id);
+          selectedEmails.add(activeUsers[i]['email']); // Add the email to the list
         }
       }
     });
   }
 
+
   Future<void> manualSendEmail(List<String> recipients, String body) async {
-    const String subject = "";
+    String subject = "Invitación a resolver la encuesta ${nameController.text}";
     final String _recipients = recipients.join(',');
 
-    // URL encode the body content
     final String encodedSubject = Uri.encodeComponent(subject);
     final String encodedBody = Uri.encodeComponent(body);
 
@@ -156,7 +175,6 @@ class _AddEditFormState extends State<AddEditForm> {
       query: 'subject=$encodedSubject&body=$encodedBody',
     );
 
-    // Use launch() method to open the email client
     if (await canLaunch(emailLaunchUri.toString())) {
       await launch(emailLaunchUri.toString());
     } else {
@@ -164,21 +182,11 @@ class _AddEditFormState extends State<AddEditForm> {
     }
   }
 
-  List<String> allRecipients = [];  
+  List<String> allRecipients = [];
   List<String> finalRecipients = [];
 
   @override
   Widget build(BuildContext context) {
-
-    hoursController.addListener(() {
-      final text = hoursController.text.toUpperCase();
-      if (hoursController.text != text) {
-        hoursController.value = hoursController.value.copyWith(
-          text: text,
-          selection: TextSelection.collapsed(offset: text.length),
-        );
-      }
-    });
     return Scaffold(
       appBar: AppBar(
         title: Center(child: Text(widget.id != null ? 'EDITAR ENCUESTA' : 'AGREGAR ENCUESTA')),
@@ -202,30 +210,32 @@ class _AddEditFormState extends State<AddEditForm> {
               SizedBox(height: 10),
               Row(
                 children: [
-                  Expanded(child: SizedBox(
-                    width: 600,
-                    child: TextFormField(
-                      controller: daysController,
-                      readOnly: false,
-                      decoration: InputDecoration(
-                        labelText: 'DÍAS HÁBILES',
-                        border: OutlineInputBorder(),
-                        contentPadding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+                  Expanded(
+                    child: SizedBox(
+                      width: 600,
+                      child: TextFormField(
+                        controller: daysController,
+                        readOnly: false,
+                        decoration: InputDecoration(
+                          labelText: 'DÍAS HÁBILES',
+                          border: OutlineInputBorder(),
+                          contentPadding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+                        ),
+                        onChanged: (value) {
+                          int horas = int.parse(value) * 9;
+                          hoursController.text = horas.toString();
+                        },
                       ),
-                      onChanged: (value) {
-                        int horas = int.parse(value)*9;
-                        hoursController.text = horas.toString();
-                      },
                     ),
-                  ),            ),
+                  ),
                   SizedBox(width: 10),
                   Expanded(
                     child: buildTextField('HORAS ESPERADAS', hoursController, true),
-                  ),                
+                  ),
                   SizedBox(width: 10),
                   Expanded(
                     child: buildDropdownField(
-                      'Estado',
+                      'ESTADO',
                       statuses,
                       (value) {
                         setState(() {
@@ -245,96 +255,123 @@ class _AddEditFormState extends State<AddEditForm> {
                   children: [
                     Expanded(
                       flex: 4,
-                      child: Text('NOMBRE', style: TextStyle(fontWeight: FontWeight.bold),)
-                    ),                       
-                    Expanded(
-                      flex: 4,
-                      child: Text('PROFESIÓN', style: TextStyle(fontWeight: FontWeight.bold),)
+                      child: Text(
+                        'NOMBRE',
+                        style: TextStyle(fontWeight: FontWeight.bold),
+                      ),
                     ),
                     Expanded(
                       flex: 4,
-                      child: Text('CARGO', style: TextStyle(fontWeight: FontWeight.bold),)
+                      child: Text(
+                        'PROFESIÓN',
+                        style: TextStyle(fontWeight: FontWeight.bold),
+                      ),
                     ),
                     Expanded(
                       flex: 4,
-                      child: Text('SEDE', style: TextStyle(fontWeight: FontWeight.bold),)
+                      child: Text(
+                        'CARGO',
+                        style: TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                    Expanded(
+                      flex: 4,
+                      child: Text(
+                        'SEDE',
+                        style: TextStyle(fontWeight: FontWeight.bold),
+                      ),
                     ),
                     Expanded(
                       flex: 1,
-                      child: Text('ESTADO', style: TextStyle(fontWeight: FontWeight.bold),)
+                      child: Text(
+                        'ESTADO',
+                        style: TextStyle(fontWeight: FontWeight.bold),
+                      ),
                     ),
-                    Expanded(
-                      flex: 1,
-                      child: SizedBox()
-                    )
+                    Expanded(flex: 1, child: SizedBox())
                   ],
                 ),
               ),
               SizedBox(height: 10),
               Divider(),
-              Container(
-                constraints: BoxConstraints(maxHeight: 400, maxWidth: 800),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  Text('SELECCIONAR TODOS'),
+                  Checkbox(
+                    value: selectAll,
+                    onChanged: (bool? value) {
+                      setState(() {
+                        selectAll = value ?? false;
+                        userSelection = List<bool>.filled(activeUsers.length, selectAll);
+                        selectedEmails.clear(); // Clear the list to avoid duplication
+                        selectedUsers.clear(); // Clear the selected users list
+                        if (selectAll) {
+                          // If "Select All" is checked, add all user IDs to the list
+                          selectedUsers.addAll(activeUsers
+                            .where((user) => user.containsKey('userId') && user['userId'] != null)
+                            .map((user) => user['userId']!));
+                          // Also add all emails to the list
+                          selectedEmails.addAll(activeUsers.map((user) => user['email']));
+                        }
+                      });
+                    },
+                  ),
+                ],
+              ),
+              Divider(),
+              SizedBox(
+                height: 400,
                 child: ListView.builder(
                   shrinkWrap: true,
                   itemCount: activeUsers.length,
                   itemBuilder: (context, index) {
-                    return CheckboxListTile(
-                      title: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Expanded(
-                            flex: 3,
-                            child: Text(activeUsers[index]['name'])
-                          ),                       
-                          Expanded(
-                            flex: 3,
-                            child: Text('${activeUsers[index]['professionName']}')
-                          ),
-                          Expanded(
-                            flex: 3,
-                            child: Text('${activeUsers[index]['positionName']}')
-                          ),
-                          Expanded(
-                            flex: 3,
-                            child: Text(activeUsers[index]['sede'])
-                          ),
-                          Expanded(
-                            flex: 1,
-                            child: Text(activeUsers[index]['status'])
-                          )
-                        ],
-                      ),
-                      value: userSelection[index],
-                      onChanged: (bool? value) {
-                        setState(() {
-                          userSelection[index] = value ?? false;
-                        });
-                      },
+                    var user = activeUsers[index];
+                    var userId = activeUsersSnapshot.docs[index].id;
+
+                    return Column(
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Expanded(flex: 4, child: Text(user['name'] ?? '')),
+                            Expanded(flex: 4, child: Text(user['professionName'])),
+                            Expanded(flex: 4, child: Text(user['positionName'])),
+                            Expanded(flex: 4, child: Text(user['sede'] ?? '')),
+                            Expanded(flex: 1, child: Text(user['status'] ?? 'NO ASIGNADA')),
+                            Expanded(
+                              flex: 1,
+                              child: Checkbox(
+                                value: userSelection[index],
+                                onChanged: (bool? selected) {
+                                  setState(() {
+                                    userSelection[index] = selected!;
+                                    if (selected) {
+                                      selectedUsers.add(userId);
+                                      selectedEmails.add(activeUsers[index]['email']);
+                                    } else {
+                                      selectedUsers.remove(userId);
+                                      selectedEmails.remove(activeUsers[index]['email']);
+                                    }
+                                  });
+                                },
+                              ),
+                            ),
+                          ],
+                        ),
+                        Divider()
+                      ],
                     );
                   },
                 ),
               ),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  TextButton(
-                    onPressed: () {
-                      setState(() {
-                        selectAll = !selectAll;
-                        userSelection = List<bool>.filled(activeUsers.length, selectAll);
-                      });
-                    },
-                    child: Text(selectAll ? 'DESELECCIONAR TODO' : 'SELECCIONAR TODO'),
-                  ),
-                  buildButton('GUARDAR', Colors.green, () {
-                    if (widget.id != null) {
-                      _updateForm();
-                    } else {
-                      _saveForm();
-                    }
-                  }),
-                  buildButton('CANCELAR', Colors.red, () => Navigator.pop(context)),
-                ],
+              SizedBox(height: 30),
+              SizedBox(height: 10),
+              ElevatedButton(
+                onPressed: () {
+                  _saveOrEditSurvey();
+                },
+                child: Text('GUARDAR ENCUESTA'),
               ),
             ],
           ),
@@ -343,33 +380,30 @@ class _AddEditFormState extends State<AddEditForm> {
     );
   }
 
-  void _saveForm() async {
-    for (int i = 0; i < activeUsers.length; i++) {
-      if (userSelection[i]) {
-        selectedUsers.add(activeUsersSnapshot.docs[i].id);
-      }
+  bool _validateForm() {
+    if (nameController.text.isEmpty ||
+        startDateController.text.isEmpty ||
+        endDateController.text.isEmpty ||
+        daysController.text.isEmpty ||
+        hoursController.text.isEmpty ||
+        selectedStatus.isEmpty) {
+      return false;
     }
-    if (_validateFields()) {
-      try {
-        CollectionReference collectionReference =
-          FirebaseFirestore.instance.collection('Encuestas');
-        // Add the main document to 'Encuestas' collection
-        String id = await idGenerator(collectionReference, 'Encuestas');
-        collectionReference.doc(id).set({
-          'name': nameController.text,
-          'startDate': startDateController.text,
-          'endDate': endDateController.text,
-          'days': daysController.text,
-          'status': selectedStatus,
-        }).then((mainDocRef) async {
-          // Add subcollection 'Usuarios' and documents for each selected user
-          for (String userId in selectedUsers) {
-            await collectionReference.doc(id).collection('Usuarios').doc(userId).set({
-              'status': 'ACTIVO',
-            });
-          }
-        });
-        const String body = '''
+    return true;
+  }
+
+  void _saveOrEditSurvey() async {
+    if (!_validateForm()) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('POR FAVOR, COMPLETE TODOS LOS CAMPOS')),
+      );
+      return;
+    }
+
+    if (widget.id != null) {
+      await _updateSurvey();
+      print(selectedEmails);
+      const String body = '''
           Hola, el área técnica de CyMA te invita a visitar el siguiente link para crear tu cuenta en la nueva plataforma de Encuestas MOP, por favor ingresar y registrar los datos allí solicitados.
 
           CLICK AQUÍ PARA CREAR USUARIO: https://javierrueda7.github.io/CYMA-EncuestasMOP/
@@ -380,134 +414,92 @@ class _AddEditFormState extends State<AddEditForm> {
 
           [Imagen: https://i.postimg.cc/RVBSz4B6/Icon-192.png]
           ''';
-        manualSendEmail(allRecipients, body);
-
-        // ignore: use_build_context_synchronously
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Encuesta guardada exitosamente.'),
-            duration: Duration(seconds: 4),
-          ),
-        );
-
-        nameController.clear();
-        startDateController.clear();
-        endDateController.clear();
-        daysController.clear();
-
-        widget.reloadList();
-
-        // ignore: use_build_context_synchronously
-        Navigator.of(context).pop();
-      } catch (e) {
-        // Handle errors
-        print('Error saving user: $e');
-        // ignore: use_build_context_synchronously
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error al guardar el usuario. Por favor, inténtelo de nuevo más tarde.'),
-            duration: Duration(seconds: 4),
-          ),
-        );
-      }
-    } else {
-      // Show error message if fields are incomplete or invalid
+      manualSendEmail(selectedEmails, body);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Por favor, complete todos los campos correctamente.'),
-          duration: Duration(seconds: 4),
-        ),
+        SnackBar(content: Text('¡ENCUESTA ACTUALIZADA EXITOSAMENTE!')),
+      );
+    } else {
+      // Check if any users are selected
+      if (selectedUsers.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('POR FAVOR, SELECCIONE AL MENOS UN USUARIO')),
+        );
+        return;
+      }
+      
+      await _addSurvey();
+      print(selectedEmails);
+      const String body = '''
+          Hola, el área técnica de CyMA te invita a visitar el siguiente link para crear tu cuenta en la nueva plataforma de Encuestas MOP, por favor ingresar y registrar los datos allí solicitados.
+
+          CLICK AQUÍ PARA CREAR USUARIO: https://javierrueda7.github.io/CYMA-EncuestasMOP/
+
+          Cordial saludo,
+
+          Equipo CyMA - Encuestas MOP
+
+          [Imagen: https://i.postimg.cc/RVBSz4B6/Icon-192.png]
+          ''';
+      manualSendEmail(selectedEmails, body);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('¡ENCUESTA CREADA EXITOSAMENTE!')),
       );
     }
+
+    widget.reloadList();
+    Navigator.pop(context);
   }
 
-  bool _validateFields() {
-    if (nameController.text.isEmpty ||
-        startDateController.text.isEmpty ||
-        endDateController.text.isEmpty ||
-        daysController.text.isEmpty ||
-        !statuses.contains(selectedStatus) ||
-        !selectedUsers.isNotEmpty) {
-      return false;
+
+  Future<void> _addSurvey() async {
+    String id = await idGenerator(encuestas, 'Encuestas');
+    var newSurveyDoc = FirebaseFirestore.instance.collection('Encuestas').doc(id);
+    await newSurveyDoc.set({
+      'name': nameController.text,
+      'startDate': startDateController.text,
+      'endDate': endDateController.text,
+      'days': daysController.text,
+      'status': selectedStatus,
+      'hours': hoursController.text,
+    });
+
+    // Retrieve the selected user IDs
+    List<String> selectedUserIds = userSelection.asMap().entries.where((entry) => entry.value).map((entry) => activeUsersSnapshot.docs[entry.key].id).toList();
+
+    for (var userId in selectedUserIds) {
+      await newSurveyDoc.collection('Usuarios').doc(userId).set({
+        'status': 'ACTIVO',
+      });
     }
-    return true;
   }
 
-  void _updateForm() async {
-    for (int i = 0; i < activeUsers.length; i++) {
-      if (userSelection[i]) {
-        selectedUsers.add(activeUsersSnapshot.docs[i].id);
+
+  Future<void> _updateSurvey() async {
+    var surveyDoc = FirebaseFirestore.instance.collection('Encuestas').doc(widget.id);
+    await surveyDoc.update({
+      'name': nameController.text,
+      'startDate': startDateController.text,
+      'endDate': endDateController.text,
+      'days': daysController.text,
+      'status': selectedStatus,
+      'hours': hoursController.text,
+    });
+
+    var userCollection = surveyDoc.collection('Usuarios');
+    var currentUsers = await userCollection.get();
+
+    for (var doc in currentUsers.docs) {
+      if (!selectedUsers.contains(doc.id)) {
+        await userCollection.doc(doc.id).delete();
       }
     }
-    if (_validateFields()) {
-      try {
-        CollectionReference collectionReference =
-          FirebaseFirestore.instance.collection('Encuestas');
-        collectionReference.doc(widget.id).update({
-          'name': nameController.text,
-          'startDate': startDateController.text,
-          'endDate': endDateController.text,
-          'days': daysController.text,
-          'status': selectedStatus,
-        }).then((mainDocRef) async {
-          // Add subcollection 'Usuarios' and documents for each selected user
-          for (String userId in selectedUsers) {
-            var docSnapshot = await collectionReference.doc(widget.id).collection('Usuarios').doc(userId).get();
-            if (!docSnapshot.exists) {
-              await collectionReference.doc(widget.id).collection('Usuarios').doc(userId).set({
-                  'status': 'ABIERTA',
-              });
-            }
-          }
-          // Get all documents in the collection
-          var querySnapshot = await collectionReference.doc(widget.id).collection('Usuarios').get();
-          // Iterate over each document in the collection
-          for (var doc in querySnapshot.docs) {
-            // Check if the document ID exists in selectedUsers
-            if (!selectedUsers.contains(doc.id)) {
-              // If not, delete the document
-              await collectionReference.doc(widget.id).collection('Usuarios').doc(doc.id).delete();
-            }
-          }
+
+    for (var userId in selectedUsers) {
+      if (!currentUsers.docs.any((doc) => doc.id == userId)) {
+        await userCollection.doc(userId).set({
+          'status': 'ACTIVO',
         });
-
-        // ignore: use_build_context_synchronously
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Encuesta guardada exitosamente.'),
-            duration: Duration(seconds: 4),
-          ),
-        );
-
-        nameController.clear();
-        startDateController.clear();
-        endDateController.clear();
-        daysController.clear();
-
-        widget.reloadList();
-
-        // ignore: use_build_context_synchronously
-        Navigator.of(context).pop();
-      } catch (e) {
-        // Handle errors
-        print('Error saving user: $e');
-        // ignore: use_build_context_synchronously
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error al guardar el usuario. Por favor, inténtelo de nuevo más tarde.'),
-            duration: Duration(seconds: 4),
-          ),
-        );
       }
-    } else {
-      // Show error message if fields are incomplete or invalid
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Por favor, complete todos los campos correctamente.'),
-          duration: Duration(seconds: 4),
-        ),
-      );
     }
   }
 }
-
