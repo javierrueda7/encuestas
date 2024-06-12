@@ -70,7 +70,7 @@ class _ListUserFormsState extends State<ListUserForms> {
                             ],
                           ) : Text(item?['data']['status']),
                           onTap: () {
-                            if(item?['data']['status'] == 'ACTIVA' && item?['user']['status'] == 'ACTIVO'){
+                            if(item?['data']['status'] == 'ACTIVA' && item?['user']['status'] == 'ABIERTA'){
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(builder: (context) => FormsPage(

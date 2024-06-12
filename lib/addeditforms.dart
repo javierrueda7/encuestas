@@ -472,7 +472,7 @@ class _AddEditFormState extends State<AddEditForm> {
 
     for (var userId in selectedUserIds) {
       await newSurveyDoc.collection('Usuarios').doc(userId).set({
-        'status': 'ACTIVO',
+        'status': 'ABIERTA',
       });
     }
   }
@@ -501,7 +501,7 @@ class _AddEditFormState extends State<AddEditForm> {
     for (var userId in selectedUsers) {
       if (!currentUsers.docs.any((doc) => doc.id == userId)) {
         await userCollection.doc(userId).set({
-          'status': 'ACTIVO',
+          'status': 'ABIERTA',
         });
       }
     }
