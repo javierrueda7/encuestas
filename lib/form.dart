@@ -292,16 +292,16 @@ class _FormsPageState extends State<FormsPage> {
                     // Then, handle new projects and activities
                     for (var project in projects) {
                       if (!projectsList.any((p) => p.name == project['projectName'])) {
-                        String newProjectId = await saveParameter('Proyectos', project['projectName'], 'PENDIENTE');
-                        project['project'] = newProjectId;
+                        // String newProjectId = await saveParameter('Proyectos', project['projectName'], 'PENDIENTE');
+                        // project['project'] = newProjectId;
                         toReview = true;
                       } else {
                         project['project'] = projectsList.firstWhere((p) => p.name == project['projectName']).id;
                       }
             
                       if (!activitiesList.any((a) => a.name == project['activityName'])) {
-                        String newActivityId = await saveParameter('Actividades', project['activityName'], 'PENDIENTE');
-                        project['activity'] = newActivityId;
+                        // String newActivityId = await saveParameter('Actividades', project['activityName'], 'PENDIENTE');
+                        // project['activity'] = newActivityId;
                         toReview = true;
                       } else {
                         project['activity'] = activitiesList.firstWhere((a) => a.name == project['activityName']).id;
@@ -310,16 +310,40 @@ class _FormsPageState extends State<FormsPage> {
             
                     // Print all elements of the projects list with updated IDs
                     for (var project in projects) {
-                      print("?proyecto=${project['project']}&actividad=${project['activity']}&horas=${project['hours']}");
+                      print("?idencuesta=${widget.idForm}&idusuario=${widget.uidUser}&proyecto=${project['project']}&actividad=${project['activity']}&horas=${project['hours']}&fecha=${DateTime.now()}&sheetName=${widget.formName}");
                     }
-                    _submitForm();
+                    
                     if(toReview){
-                      for(var project in projects){
-            
-                      }
-            
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('Seleccione únicamente Actividades o Proyectos existentes.'),
+                          duration: Duration(seconds: 4),
+                        ),
+                      );
+                      return;                      
                     } else {
-            
+                      List<String> projectStrings = [];
+
+                      for (var project in projects) {
+                        projectStrings.add("?idencuesta=${widget.idForm}&idusuario=${widget.uidUser}&proyecto=${project['project']}&actividad=${project['activity']}&horas=${project['hours']}&fecha=${DateTime.now()}&sheetName=${widget.formName}");
+                      }
+
+                      String resultString = projectStrings.join(';');                      
+                      print(resultString);
+                      _submitForm();
+                      FirebaseFirestore.instance.collection('Encuestas').doc(widget.idForm).collection('Usuarios').doc(widget.uidUser).update({
+                        'answer': resultString,
+                        'status': 'ENVIADA',
+                        'date': DateTime.now(),
+                        'idencuesta': widget.idForm
+                      });
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('Encuesta respondida exitosamente.'),
+                          duration: Duration(seconds: 4),
+                        ),
+                      );
+                      Navigator.of(context).pop();
                     }
             
                     // Implement additional submit functionality here (e.g., saving to Firestore)
@@ -336,21 +360,21 @@ class _FormsPageState extends State<FormsPage> {
   }
   late final _formKey;
   void _submitForm() async {
-  const String scriptURL = 'https://script.google.com/macros/s/AKfycbx2TOqfJJn9hqp0lqekUGIrlNC1gtRn61ABXf3tKG7_5B2WAQiRvcPTv6iCesuz5znfCw/exec';
+    const String scriptURL = 'https://script.google.com/macros/s/AKfycbzzOC5NJpv9s2gADzTx92GyXgUnjGnfdAOAGgwls3MecnGPKJ37_1qBhIu3xQz3JYFtow/exec';
 
-  for (var project in projects) {
-    String queryString = "?proyecto=${project['project']}&actividad=${project['activity']}&horas=${project['hours']}&sheetName=${widget.formName}";
+    for (var project in projects) {
+      String queryString = "?idencuesta=${widget.idForm}&idusuario=${widget.uidUser}&proyecto=${project['project']}&actividad=${project['activity']}&horas=${project['hours']}&fecha=${DateTime.now()}&sheetName=${widget.formName}";
 
-    var finalURI = Uri.parse(scriptURL + queryString);
-    var response = await http.get(finalURI);
-    //print(finalURI);
+      var finalURI = Uri.parse(scriptURL + queryString);
+      var response = await http.get(finalURI);
+      //print(finalURI);
 
-    if (response.statusCode == 200) {
-      var bodyR = convert.jsonDecode(response.body);
-      print(bodyR);
+      if (response.statusCode == 200) {
+        var bodyR = convert.jsonDecode(response.body);
+        print(bodyR);
+      }
     }
   }
-}
 
 
   Widget buildProjectItem(int index) {

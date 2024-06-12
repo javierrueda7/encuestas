@@ -148,8 +148,25 @@ Future<List<Map<String, dynamic>>> getUsuarios() async {
     }
   }
 
+  // Sort the usersList by 'status' and then by 'name'
+  usersList.sort((a, b) {
+    // Compare 'status' first
+    int statusComparison = a['status'] == 'ACTIVO' && b['status'] != 'ACTIVO'
+        ? -1
+        : (a['status'] != 'ACTIVO' && b['status'] == 'ACTIVO' ? 1 : 0);
+
+    // If 'status' is the same, compare by 'name'
+    if (statusComparison != 0) {
+      return statusComparison;
+    } else {
+      return a['name'].compareTo(b['name']);
+    }
+  });
+
   return usersList;
 }
+
+
 
 
 
@@ -199,7 +216,7 @@ Future<List<Map<String, dynamic>>> getEncuestasUser(String searchString) async {
     DocumentSnapshot usuarioDoc = await usuariosCollection.doc(searchString).get();
     
     // If a document with the matching ID is found in the subcollection
-    // if (usuarioDoc.exists) {
+    if (usuarioDoc.exists) {
       // Create a map for the "Encuesta" document
       Map<String, dynamic> encuesta = {
         'id': encuestaDoc.id,
@@ -209,9 +226,8 @@ Future<List<Map<String, dynamic>>> getEncuestasUser(String searchString) async {
       
       // Add the map to the list
       formsList.add(encuesta);
-    // }
+    }
   }
-
   return formsList;
 }
 

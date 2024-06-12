@@ -46,6 +46,7 @@ Widget buildDateField(String label, TextEditingController controller, BuildConte
     controller: controller,
     onTap: () async {
       final DateTime? picked = await showDatePicker(
+        locale: const Locale("es", "CO"),
         context: context,
         initialDate: DateTime.now(),
         firstDate: DateTime(1900),

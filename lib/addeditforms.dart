@@ -87,60 +87,68 @@ class _AddEditFormState extends State<AddEditForm> {
   }
 
   Future<void> _loadActiveUsers() async {
-    activeUsersSnapshot = await FirebaseFirestore.instance
-        .collection('Usuarios')
-        .where('status', isEqualTo: 'ACTIVO')
-        .where('role', isEqualTo: 'USUARIO')
-        .get();
+    try {
+      activeUsersSnapshot = await FirebaseFirestore.instance
+          .collection('Usuarios')
+          .orderBy('name') // Order by 'name' field from A to Z
+          .where('status', isEqualTo: 'ACTIVO')
+          .where('role', isEqualTo: 'USUARIO')          
+          .get();
 
-    Map<String, String> positionNames = {};
-    Map<String, String> professionNames = {};
+      Map<String, String> positionNames = {};
+      Map<String, String> professionNames = {};
 
-    final CollectionReference positions = FirebaseFirestore.instance.collection('Cargos');
-    final CollectionReference professions = FirebaseFirestore.instance.collection('Profesiones');
-    final positionQuery = positions.get();
-    final professionQuery = professions.get();
-    final results = await Future.wait([positionQuery, professionQuery]);
+      final CollectionReference positions = FirebaseFirestore.instance.collection('Cargos');
+      final CollectionReference professions = FirebaseFirestore.instance.collection('Profesiones');
+      final positionQuery = positions.get();
+      final professionQuery = professions.get();
+      final results = await Future.wait([positionQuery, professionQuery]);
 
-    final positionDocs = results[0].docs;
-    final professionDocs = results[1].docs;
+      final positionDocs = results[0].docs;
+      final professionDocs = results[1].docs;
 
-    positionNames = {
-      for (var document in positionDocs)
-        document.id: (document.data() as Map<String, dynamic>)['name'] as String? ?? 'Unknown Position'
-    };
-    professionNames = {
-      for (var document in professionDocs)
-        document.id: (document.data() as Map<String, dynamic>)['name'] as String? ?? 'Unknown Profession'
-    };
+      positionNames = {
+        for (var document in positionDocs)
+          document.id: (document.data() as Map<String, dynamic>)['name'] as String? ?? 'Unknown Position'
+      };
+      professionNames = {
+        for (var document in professionDocs)
+          document.id: (document.data() as Map<String, dynamic>)['name'] as String? ?? 'Unknown Profession'
+      };
 
-    setState(() {
-      activeUsers = activeUsersSnapshot.docs.map((doc) {
-        var data = doc.data() as Map<String, dynamic>?;
+      setState(() {
+        activeUsers = activeUsersSnapshot.docs.map((doc) {
+          var data = doc.data() as Map<String, dynamic>?;
 
-        if (data == null || !data.containsKey('status')) {
-          data ??= {};
-          data['status'] = 'NO ASIGNADA';
+          if (data == null || !data.containsKey('status')) {
+            data ??= {};
+            data['status'] = 'NO ASIGNADA';
+          }
+
+          String positionName = positionNames[data['position']] ?? 'Unknown Position';
+          String professionName = professionNames[data['profession']] ?? 'Unknown Profession';
+
+          data['positionName'] = positionName;
+          data['professionName'] = professionName;
+
+          return data;
+        }).toList();
+
+        userSelection = List<bool>.filled(activeUsers.length, false);
+
+        if (widget.id != null) {
+          _loadSelectedUsers(widget.id!);
+        } else {
+          userSelection = List<bool>.filled(activeUsers.length, true);
         }
-
-        String positionName = positionNames[data['position']] ?? 'Unknown Position';
-        String professionName = professionNames[data['profession']] ?? 'Unknown Profession';
-
-        data['positionName'] = positionName;
-        data['professionName'] = professionName;
-
-        return data;
-      }).toList();
-
-      userSelection = List<bool>.filled(activeUsers.length, false);
-
-      if (widget.id != null) {
-        _loadSelectedUsers(widget.id!);
-      } else {
-        userSelection = List<bool>.filled(activeUsers.length, true);
-      }
-    });
+      });
+    } catch (e) {
+      print('Error loading active users: $e');
+      // Handle the error, e.g., show a Snackbar or an alert
+    }
   }
+
+
 
   Future<void> _loadSelectedUsers(String id) async {
     var selectedUsersSnapshot = await FirebaseFirestore.instance
@@ -404,15 +412,13 @@ class _AddEditFormState extends State<AddEditForm> {
       await _updateSurvey();
       print(selectedEmails);
       const String body = '''
-          Hola, el área técnica de CyMA te invita a visitar el siguiente link para crear tu cuenta en la nueva plataforma de Encuestas MOP, por favor ingresar y registrar los datos allí solicitados.
+          Hola, el área técnica de CyMA te invita a responder la última encuesta, copia y pega el siguiente link en tu navegador para visitar la plataforma de Encuestas MOP.
 
-          CLICK AQUÍ PARA CREAR USUARIO: https://javierrueda7.github.io/CYMA-EncuestasMOP/
+          https://javierrueda7.github.io/CYMA-EncuestasMOP/
 
           Cordial saludo,
 
-          Equipo CyMA - Encuestas MOP
-
-          [Imagen: https://i.postimg.cc/RVBSz4B6/Icon-192.png]
+          Equipo CyMA - Encuestas MOP          
           ''';
       manualSendEmail(selectedEmails, body);
       ScaffoldMessenger.of(context).showSnackBar(
@@ -430,15 +436,13 @@ class _AddEditFormState extends State<AddEditForm> {
       await _addSurvey();
       print(selectedEmails);
       const String body = '''
-          Hola, el área técnica de CyMA te invita a visitar el siguiente link para crear tu cuenta en la nueva plataforma de Encuestas MOP, por favor ingresar y registrar los datos allí solicitados.
+          Hola, el área técnica de CyMA te invita a responder la última encuesta, copia y pega el siguiente link en tu navegador para visitar la plataforma de Encuestas MOP.
 
-          CLICK AQUÍ PARA CREAR USUARIO: https://javierrueda7.github.io/CYMA-EncuestasMOP/
+          https://javierrueda7.github.io/CYMA-EncuestasMOP/
 
           Cordial saludo,
 
           Equipo CyMA - Encuestas MOP
-
-          [Imagen: https://i.postimg.cc/RVBSz4B6/Icon-192.png]
           ''';
       manualSendEmail(selectedEmails, body);
       ScaffoldMessenger.of(context).showSnackBar(

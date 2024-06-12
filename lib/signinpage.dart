@@ -124,7 +124,7 @@ class _SignInPageState extends State<SignInPage> {
                               Navigator.push(
                                   context,
                                   MaterialPageRoute(
-                                      builder: (context) => MainMenu(role: rol,)));
+                                      builder: (context) => MainMenu(role: rol, uid: userWithEmail['uid'])));
                             // ignore: sdk_version_since
                             }).onError((error, stackTrace) {
                               ScaffoldMessenger.of(context).showSnackBar(
@@ -215,7 +215,7 @@ class _SignInPageState extends State<SignInPage> {
         onTap: () {
           FirebaseAuth.instance.signInAnonymously().then((value) {
             Navigator.push(context,
-                MaterialPageRoute(builder: (context) => MainMenu(role: 'ANONIMO',)));
+                MaterialPageRoute(builder: (context) => MainMenu(role: 'ANONIMO', uid: '')));
           // ignore: sdk_version_since
           }).onError((error, stackTrace) {});
         },

@@ -10,18 +10,21 @@ import 'package:forms_app/userforms.dart';
 
 class MainMenu extends StatefulWidget {
   final String? role;
-  MainMenu({super.key, required this.role});
+  final String? uid;
+  MainMenu({super.key, required this.role, required this.uid});
   @override
   _MainMenuState createState() => _MainMenuState();
 }
 
 class _MainMenuState extends State<MainMenu> {
   String role = 'ANON';
+  String uid = '';
 
   @override
   void initState() {
     super.initState();
     role = widget.role ?? role;
+    uid = widget.uid ?? uid;
   }
 
   
@@ -70,7 +73,7 @@ class _MainMenuState extends State<MainMenu> {
                     onPressed: () {
                       Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (context) => ListUserForms()),
+                        MaterialPageRoute(builder: (context) => ListUserForms(uid: uid,)),
                       );
                     },
                     child: Text('RESPONDER ENCUESTA'),

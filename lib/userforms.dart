@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:forms_app/form.dart';
 import 'package:forms_app/services/firebase_services.dart';
+import 'package:intl/intl.dart';
 
 class ListUserForms extends StatefulWidget {
+  final String uid;
 
-  ListUserForms({super.key});
+  ListUserForms({super.key, required this.uid});
 
   @override
   // ignore: library_private_types_in_public_api
@@ -13,10 +15,11 @@ class ListUserForms extends StatefulWidget {
 
 class _ListUserFormsState extends State<ListUserForms> {
   
-  String uid= 'MuDEsJivvLUlbF5rZZRg8H0Jvw83';
+  late String uid;
 
   @override
   void initState() {
+    uid = widget.uid;
     super.initState();
   }
 
@@ -60,9 +63,14 @@ class _ListUserFormsState extends State<ListUserForms> {
                           leading: Text(item?['id']),
                           title: Text(item?['data']['name']),
                           subtitle: Text(item?['data']['startDate'] + ' - ' + item?['data']['endDate']),
-                          trailing: Text(item?['data']['status']),
+                          trailing: item?['user']['status'] == 'ENVIADA' ? Column(
+                            children: [
+                              Text(item?['user']['status']),
+                              Text(DateFormat('dd-MM-yyyy HH:mm').format(item?['user']['date'].toDate()), style: TextStyle(fontSize: 10),)
+                            ],
+                          ) : Text(item?['data']['status']),
                           onTap: () {
-                            if(item?['data']['status'] == 'ACTIVA'){
+                            if(item?['data']['status'] == 'ACTIVA' && item?['user']['status'] == 'ACTIVO'){
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(builder: (context) => FormsPage(
@@ -72,6 +80,13 @@ class _ListUserFormsState extends State<ListUserForms> {
                                   uidUser: uid,
                                   hours: ((int.parse(item?['data']['days']))*9).toString()
                                 )), // Navigate to the NewUserPage
+                              );
+                            } else if(item?['user']['status'] == 'ENVIADA'){
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text('La encuesta ya ha sido respondida.'),
+                                  duration: Duration(seconds: 4),
+                                ),
                               );
                             }
                           },

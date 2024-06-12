@@ -1,4 +1,3 @@
-
 // ignore: must_be_immutable
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -106,7 +105,6 @@ class _AddEditUserState extends State<AddEditUser> {
     selectedSede = widget.sede ?? 'BUCARAMANGA';
     admin = widget.admin ?? false;
 
-    
     // Initialize controllers
     idController = TextEditingController();
     nameController = TextEditingController();
@@ -144,12 +142,15 @@ class _AddEditUserState extends State<AddEditUser> {
           emailController.text = userData['email'].toLowerCase() ?? '';
           professionController.text = profession ?? '';
           positionController.text = position ?? '';
+          selectedProfessionId = userData['profession'];
+          selectedPositionId = userData['position'];
         });
       }
     } catch (e) {
       print('Error fetching user data: $e');
     }
   }  
+
 
   @override
   Widget build(BuildContext context) {
@@ -614,5 +615,3 @@ class Parametro {
 
   Parametro({required this.id, required this.name});
 }
-
-
