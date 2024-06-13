@@ -257,7 +257,7 @@ class _AddEditFormState extends State<AddEditForm> {
               ),
               SizedBox(height: 20),
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 10),
+                padding: const EdgeInsets.fromLTRB(20, 0, 20, 0),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -302,75 +302,81 @@ class _AddEditFormState extends State<AddEditForm> {
               ),
               SizedBox(height: 10),
               Divider(),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  Text('SELECCIONAR TODOS'),
-                  Checkbox(
-                    value: selectAll,
-                    onChanged: (bool? value) {
-                      setState(() {
-                        selectAll = value ?? false;
-                        userSelection = List<bool>.filled(activeUsers.length, selectAll);
-                        selectedEmails.clear(); // Clear the list to avoid duplication
-                        selectedUsers.clear(); // Clear the selected users list
-                        if (selectAll) {
-                          // If "Select All" is checked, add all user IDs to the list
-                          selectedUsers.addAll(activeUsers
-                            .where((user) => user.containsKey('userId') && user['userId'] != null)
-                            .map((user) => user['userId']!));
-                          // Also add all emails to the list
-                          selectedEmails.addAll(activeUsers.map((user) => user['email']));
-                        }
-                      });
-                    },
-                  ),
-                ],
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 0, 20, 0),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    Text('SELECCIONAR TODOS'),
+                    Checkbox(
+                      value: selectAll,
+                      onChanged: (bool? value) {
+                        setState(() {
+                          selectAll = value ?? false;
+                          userSelection = List<bool>.filled(activeUsers.length, selectAll);
+                          selectedEmails.clear(); // Clear the list to avoid duplication
+                          selectedUsers.clear(); // Clear the selected users list
+                          if (selectAll) {
+                            // If "Select All" is checked, add all user IDs to the list
+                            selectedUsers.addAll(activeUsers
+                              .where((user) => user.containsKey('userId') && user['userId'] != null)
+                              .map((user) => user['userId']!));
+                            // Also add all emails to the list
+                            selectedEmails.addAll(activeUsers.map((user) => user['email']));
+                          }
+                        });
+                      },
+                    ),
+                  ],
+                ),
               ),
               Divider(),
-              SizedBox(
-                height: 400,
-                child: ListView.builder(
-                  shrinkWrap: true,
-                  itemCount: activeUsers.length,
-                  itemBuilder: (context, index) {
-                    var user = activeUsers[index];
-                    var userId = activeUsersSnapshot.docs[index].id;
-
-                    return Column(
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Expanded(flex: 4, child: Text(user['name'] ?? '')),
-                            Expanded(flex: 4, child: Text(user['professionName'])),
-                            Expanded(flex: 4, child: Text(user['positionName'])),
-                            Expanded(flex: 4, child: Text(user['sede'] ?? '')),
-                            Expanded(flex: 1, child: Text(user['status'] ?? 'NO ASIGNADA')),
-                            Expanded(
-                              flex: 1,
-                              child: Checkbox(
-                                value: userSelection[index],
-                                onChanged: (bool? selected) {
-                                  setState(() {
-                                    userSelection[index] = selected!;
-                                    if (selected) {
-                                      selectedUsers.add(userId);
-                                      selectedEmails.add(activeUsers[index]['email']);
-                                    } else {
-                                      selectedUsers.remove(userId);
-                                      selectedEmails.remove(activeUsers[index]['email']);
-                                    }
-                                  });
-                                },
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 0, 20, 0),
+                child: SizedBox(
+                  height: 400,
+                  child: ListView.builder(
+                    shrinkWrap: true,
+                    itemCount: activeUsers.length,
+                    itemBuilder: (context, index) {
+                      var user = activeUsers[index];
+                      var userId = activeUsersSnapshot.docs[index].id;
+                
+                      return Column(
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Expanded(flex: 4, child: Text(user['name'] ?? '')),
+                              Expanded(flex: 4, child: Text(user['professionName'])),
+                              Expanded(flex: 4, child: Text(user['positionName'])),
+                              Expanded(flex: 4, child: Text(user['sede'] ?? '')),
+                              Expanded(flex: 1, child: Text(user['status'] ?? 'NO ASIGNADA')),
+                              Expanded(
+                                flex: 1,
+                                child: Checkbox(
+                                  value: userSelection[index],
+                                  onChanged: (bool? selected) {
+                                    setState(() {
+                                      userSelection[index] = selected!;
+                                      if (selected) {
+                                        selectedUsers.add(userId);
+                                        selectedEmails.add(activeUsers[index]['email']);
+                                      } else {
+                                        selectedUsers.remove(userId);
+                                        selectedEmails.remove(activeUsers[index]['email']);
+                                      }
+                                    });
+                                  },
+                                ),
                               ),
-                            ),
-                          ],
-                        ),
-                        Divider()
-                      ],
-                    );
-                  },
+                            ],
+                          ),
+                          Divider()
+                        ],
+                      );
+                    },
+                  ),
                 ),
               ),
               SizedBox(height: 30),

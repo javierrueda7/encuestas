@@ -23,6 +23,10 @@ class _ListUserFormsState extends State<ListUserForms> {
     super.initState();
   }
 
+  void _reloadList() {
+    setState(() {}); // Empty setState just to trigger rebuild
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -78,7 +82,8 @@ class _ListUserFormsState extends State<ListUserForms> {
                                   formName: item?['data']['name'],
                                   dates: item?['data']['startDate'] + ' - ' + item?['data']['endDate'],
                                   uidUser: uid,
-                                  hours: ((int.parse(item?['data']['days']))*9).toString()
+                                  hours: ((int.parse(item?['data']['days']))*9).toString(),
+                                  reloadList: _reloadList,
                                 )), // Navigate to the NewUserPage
                               );
                             } else if(item?['user']['status'] == 'ENVIADA'){

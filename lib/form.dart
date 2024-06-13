@@ -14,7 +14,8 @@ class FormsPage extends StatefulWidget {
   final String dates;
   final String uidUser;
   final String hours;
-  FormsPage({super.key, required this.idForm, required this.formName, required this.dates, required this.uidUser, required this.hours});
+  final VoidCallback reloadList;
+  FormsPage({super.key, required this.idForm, required this.formName, required this.dates, required this.uidUser, required this.hours, required this.reloadList,});
   
   @override
   State<FormsPage> createState() => _FormsPageState();
@@ -343,6 +344,7 @@ class _FormsPageState extends State<FormsPage> {
                           duration: Duration(seconds: 4),
                         ),
                       );
+                      widget.reloadList();
                       Navigator.of(context).pop();
                     }
             
