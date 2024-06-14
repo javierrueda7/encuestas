@@ -254,11 +254,11 @@ class _FormsPageState extends State<FormsPage> {
                       children: [
                         Text(
                           'HORAS ESPERADAS: $expectedHours',
-                          style: TextStyle(fontSize: 12,),
+                          style: TextStyle(fontSize: 14,),
                         ),
                         Text(
                           'HORAS REGISTRADAS: $totalHours',
-                          style: TextStyle(fontSize: 12,),
+                          style: TextStyle(fontSize: 14,),
                         ),
                       ],
                     ),

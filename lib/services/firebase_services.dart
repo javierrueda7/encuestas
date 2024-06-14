@@ -194,7 +194,7 @@ Future<List<Map<String, dynamic>>> getEncuestas() async {
     };
     formsList.add(encuesta);
   }
-
+  formsList.sort((a, b) => b['id'].compareTo(a['id']));
   return formsList;
 }
 
@@ -227,7 +227,8 @@ Future<List<Map<String, dynamic>>> getEncuestasUser(String searchString) async {
       // Add the map to the list
       formsList.add(encuesta);
     }
-  }
+  }  formsList.sort((a, b) => b['id'].compareTo(a['id']));
+
   return formsList;
 }
 
