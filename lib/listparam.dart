@@ -30,7 +30,7 @@ class _ListParameterScreenState extends State<ListParameterScreen> {
         title: Center(child: Text('ADMINISTRACIÓN DE ${widget.param.toUpperCase()}')),
       ),
       body: Padding(
-        padding: EdgeInsets.fromLTRB(300, 50, 300, 50),
+        padding: EdgeInsets.fromLTRB(350, 50, 350, 50),
         child: Column(
           children: [
             Padding(
@@ -62,7 +62,7 @@ class _ListParameterScreenState extends State<ListParameterScreen> {
                         return ListTile(
                           leading: SizedBox(child: item?['data']['status'] == 'PENDIENTE' ? Icon(Icons.circle, color: Colors.red,) : SizedBox()),
                           title: Text(item?['data']['name']),
-                          trailing: Text(item?['data']['status']),
+                          trailing: Text(item?['data']['status'], style: TextStyle(fontSize: 12),),
                           onTap: () {
                             // Open edit dialog or perform edit action here
                             showDialog(
@@ -157,7 +157,7 @@ class _AddEditParamState extends State<AddEditParam> {
                 setState(() {
                   selectedEstado = value ?? 'ACTIVO';
                 });
-              }, initialValue: selectedEstado),
+              }, initialValue: selectedEstado, allowChange: true),
               SizedBox(height: 20),
             ],
           ),

@@ -166,10 +166,6 @@ Future<List<Map<String, dynamic>>> getUsuarios() async {
   return usersList;
 }
 
-
-
-
-
 Future<List<Map<String, dynamic>>> getEncuestas() async {
   List<Map<String, dynamic>> formsList = [];
   final CollectionReference forms = db.collection('Encuestas');

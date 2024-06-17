@@ -190,7 +190,7 @@ class _AddEditUserState extends State<AddEditUser> {
                     setState(() {
                       selectedIdType = value ?? 'TIPO DE DOCUMENTO'; // Ensure a default value if null
                     });
-                  }, initialValue: selectedIdType),
+                  }, initialValue: selectedIdType, allowChange: true),
                 ),
                 SizedBox(width: 10),
                 Expanded(child: buildTextField('NÚMERO DE IDENTIFICACIÓN', idController, false)),
@@ -200,7 +200,7 @@ class _AddEditUserState extends State<AddEditUser> {
                     setState(() {
                       selectedSede = value ?? 'SEDE'; // Ensure a default value if null
                     });
-                  }, initialValue: selectedSede),
+                  }, initialValue: selectedSede, allowChange: true),
                 ),
               ],
             ),
@@ -217,7 +217,7 @@ class _AddEditUserState extends State<AddEditUser> {
                       setState(() {
                         selectedGender = value ?? 'GÉNERO';
                       });
-                    }, initialValue: selectedGender
+                    }, initialValue: selectedGender, allowChange: true
                   ),
                 ),
                 Visibility(
@@ -337,7 +337,7 @@ class _AddEditUserState extends State<AddEditUser> {
                         setState(() {
                           selectedRole = value ?? 'ROL';
                         });
-                      }, initialValue: selectedRole
+                      }, initialValue: selectedRole, allowChange: true
                     ),
                   ),
                   SizedBox(width: 10),
@@ -347,7 +347,7 @@ class _AddEditUserState extends State<AddEditUser> {
                         setState(() {
                           selectedStatus = value!;
                         });
-                      }, initialValue: selectedStatus
+                      }, initialValue: selectedStatus, allowChange: true
                     ),
                   ),
                 ],

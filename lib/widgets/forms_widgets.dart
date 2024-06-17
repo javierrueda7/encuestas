@@ -65,24 +65,43 @@ Widget buildDateField(String label, TextEditingController controller, BuildConte
   );
 }
 
-Widget buildDropdownField(String label, List<dynamic> items, void Function(String?)? onChanged, {required String initialValue}) {
-  return DropdownButtonFormField<String>(
-    decoration: InputDecoration(
-      labelText: label,
-      border: OutlineInputBorder(),
-      constraints: BoxConstraints(maxWidth: 800),
-      contentPadding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+Widget buildDropdownField(
+    String label,
+    List<dynamic> items,
+    void Function(String?)? onChanged, {
+    required String initialValue,
+    required bool allowChange,
+}) {
+  return IgnorePointer(
+    ignoring: !allowChange,
+    child: InputDecorator(
+      decoration: InputDecoration(
+        labelText: label,
+        border: OutlineInputBorder(),
+        constraints: BoxConstraints(maxWidth: 800),
+        contentPadding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+        enabled: allowChange, // This will change the visual appearance
+      ),
+      child: DropdownButtonHideUnderline(
+        child: DropdownButtonFormField<String>(
+          decoration: InputDecoration(
+            border: InputBorder.none,
+          ),
+          value: items.contains(initialValue) ? initialValue : items.first,
+          items: items.map((item) {
+            return DropdownMenuItem<String>(
+              value: item,
+              child: Text(item),
+            );
+          }).toList(),
+          onChanged: allowChange ? onChanged : null,
+          disabledHint: Text(items.contains(initialValue) ? initialValue : items.first),
+        ),
+      ),
     ),
-    value: items.contains(initialValue) ? initialValue : items.first,
-    items: items.map((item) {
-      return DropdownMenuItem<String>(
-        value: item,
-        child: Text(item),
-      );
-    }).toList(),
-    onChanged: onChanged,
   );
 }
+
 
 Widget buildTextField(String label, TextEditingController controller, bool read) {
   controller.addListener(() {

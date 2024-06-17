@@ -212,7 +212,7 @@ class _FormsPageState extends State<FormsPage> {
         title: Center(child: Text('${widget.formName.toUpperCase()} - ${widget.dates}')),
       ),
       body: Padding(
-        padding: EdgeInsets.fromLTRB(300, 50, 300, 50),
+        padding: EdgeInsets.fromLTRB(350, 50, 350, 50),
         child: SingleChildScrollView(
           padding: EdgeInsets.all(16.0),
           child: Form(
@@ -311,7 +311,7 @@ class _FormsPageState extends State<FormsPage> {
             
                     // Print all elements of the projects list with updated IDs
                     for (var project in projects) {
-                      print("?idencuesta=${widget.idForm}&idusuario=${widget.uidUser}&proyecto=${project['project']}&actividad=${project['activity']}&horas=${project['hours']}&fecha=${DateTime.now()}&sheetName=${widget.formName}");
+                      print("?idencuesta=${widget.idForm}&idusuario=${widget.uidUser}&proyecto=${project['project']}&actividad=${project['activity']}&horas=${project['hours']}&fecha=${DateTime.now()}");
                     }
                     
                     if(toReview){
@@ -326,7 +326,7 @@ class _FormsPageState extends State<FormsPage> {
                       List<String> projectStrings = [];
 
                       for (var project in projects) {
-                        projectStrings.add("?idencuesta=${widget.idForm}&idusuario=${widget.uidUser}&proyecto=${project['project']}&actividad=${project['activity']}&horas=${project['hours']}&fecha=${DateTime.now()}&sheetName=${widget.formName}");
+                        projectStrings.add("?idencuesta=${widget.idForm}&idusuario=${widget.uidUser}&proyecto=${project['project']}&actividad=${project['activity']}&horas=${project['hours']}&fecha=${DateTime.now()}");
                       }
 
                       String resultString = projectStrings.join(';');                      
@@ -362,10 +362,10 @@ class _FormsPageState extends State<FormsPage> {
   }
   late final _formKey;
   void _submitForm() async {
-    const String scriptURL = 'https://script.google.com/macros/s/AKfycbzzOC5NJpv9s2gADzTx92GyXgUnjGnfdAOAGgwls3MecnGPKJ37_1qBhIu3xQz3JYFtow/exec';
+    const String scriptURL = 'https://script.google.com/macros/s/AKfycbxCxMCC1-HQ-lmI4WFXh2JCZYXFBHVknW9KvTM0_C0D-P2-19zFEw3rbnIEnKC-bzjHCQ/exec';
 
     for (var project in projects) {
-      String queryString = "?idencuesta=${widget.idForm}&idusuario=${widget.uidUser}&proyecto=${project['project']}&actividad=${project['activity']}&horas=${project['hours']}&fecha=${DateTime.now()}&sheetName=${widget.formName}";
+      String queryString = "?idencuesta=${widget.idForm}&idusuario=${widget.uidUser}&proyecto=${project['project']}&actividad=${project['activity']}&horas=${project['hours']}&fecha=${DateTime.now()}";
 
       var finalURI = Uri.parse(scriptURL + queryString);
       var response = await http.get(finalURI);

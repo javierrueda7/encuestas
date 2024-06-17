@@ -4,7 +4,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:forms_app/services/firebase_services.dart';
 import 'package:forms_app/widgets/forms_widgets.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 class AddEditForm extends StatefulWidget {
   final String? id; // Nullable to differentiate between adding and editing
@@ -39,11 +38,11 @@ class _AddEditFormState extends State<AddEditForm> {
   List<Map<String, dynamic>> activeUsers = [];
   List<bool> userSelection = [];
   bool selectAll = false;
-  String selectedStatus = 'ACTIVA';
+  bool activarEncuesta = false;
+  String selectedStatus = 'CREADA';
   List<String> selectedUsers = [];
   TextEditingController hoursController = TextEditingController();
-  List<String> selectedEmails = [];
-  final List<String> statuses = ['ACTIVA', 'CERRADA'];
+  List<String> statuses = ['CREADA', 'ACTIVA', 'CERRADA'];
   late QuerySnapshot activeUsersSnapshot;
 
   @override
@@ -62,28 +61,16 @@ class _AddEditFormState extends State<AddEditForm> {
         startDateController.text = widget.startDate ?? '';
         endDateController.text = widget.endDate ?? '';
         daysController.text = widget.days ?? '';
-        selectedStatus = widget.status ?? 'ACTIVA';
+        selectedStatus = widget.status ?? 'CREADA';
+        statuses = widget.status == 'ACTIVA' || widget.status == 'CERRADA' ? ['ACTIVA', 'CERRADA'] : ['CREADA', 'ACTIVA', 'CERRADA'];
+        activarEncuesta = widget.status == 'ACTIVA' || widget.status == 'CERRADA' ?  true : false;
         hoursController.text = (((int.parse(daysController.text)) * 9).toString());
       });
     } else {
       setState(() {
         selectAll = true;
-        // Retrieve all emails of active users
-        _loadAllUserEmails();
       });
     }
-  }
-
-
-  Future<void> _loadAllUserEmails() async {
-    // Fetch all users from the collection
-    var allUsersSnapshot = await FirebaseFirestore.instance.collection('Usuarios').get();
-    // Extract and store their emails in selectedEmails list
-    setState(() {
-      selectedEmails = allUsersSnapshot.docs.map((doc) => doc['email'].toString()).toList();
-      // Populate selectedUsers with all active user IDs
-      selectedUsers = allUsersSnapshot.docs.map<String>((doc) => doc.id).toList();
-    });
   }
 
   Future<void> _loadActiveUsers() async {
@@ -148,8 +135,6 @@ class _AddEditFormState extends State<AddEditForm> {
     }
   }
 
-
-
   Future<void> _loadSelectedUsers(String id) async {
     var selectedUsersSnapshot = await FirebaseFirestore.instance
         .collection('Encuestas')
@@ -163,35 +148,10 @@ class _AddEditFormState extends State<AddEditForm> {
         if (selectedUsersIds.contains(activeUsersSnapshot.docs[i].id)) {
           userSelection[i] = true;
           selectedUsers.add(activeUsersSnapshot.docs[i].id);
-          selectedEmails.add(activeUsers[i]['email']); // Add the email to the list
         }
       }
     });
   }
-
-
-  Future<void> manualSendEmail(List<String> recipients, String body) async {
-    String subject = "Invitación a resolver la encuesta ${nameController.text}";
-    final String _recipients = recipients.join(',');
-
-    final String encodedSubject = Uri.encodeComponent(subject);
-    final String encodedBody = Uri.encodeComponent(body);
-
-    final Uri emailLaunchUri = Uri(
-      scheme: 'mailto',
-      path: _recipients,
-      query: 'subject=$encodedSubject&body=$encodedBody',
-    );
-
-    if (await canLaunch(emailLaunchUri.toString())) {
-      await launch(emailLaunchUri.toString());
-    } else {
-      throw 'Could not launch $emailLaunchUri';
-    }
-  }
-
-  List<String> allRecipients = [];
-  List<String> finalRecipients = [];
 
   @override
   Widget build(BuildContext context) {
@@ -200,7 +160,7 @@ class _AddEditFormState extends State<AddEditForm> {
         title: Center(child: Text(widget.id != null ? 'EDITAR ENCUESTA' : 'AGREGAR ENCUESTA')),
       ),
       body: Padding(
-        padding: EdgeInsets.fromLTRB(300, 50, 300, 50),
+        padding: EdgeInsets.fromLTRB(350, 50, 350, 50),
         child: SingleChildScrollView(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -247,10 +207,25 @@ class _AddEditFormState extends State<AddEditForm> {
                       statuses,
                       (value) {
                         setState(() {
-                          selectedStatus = value ?? 'ACTIVA';
+                          selectedStatus = value ?? 'CREADA';
                         });
                       },
-                      initialValue: selectedStatus,
+                      initialValue: selectedStatus, allowChange: widget.id == null || widget.status == 'CREADA' ? false : true
+                    ),
+                  ),
+                  Expanded(
+                    child: Row(
+                      children: [                                                
+                        Checkbox(
+                          value: activarEncuesta,
+                          onChanged: widget.status == 'CREADA' || widget.status == null ? (bool? value) {
+                            setState(() {
+                              activarEncuesta = value ?? false;
+                            });
+                          } : null,
+                        ),
+                        Text('ACTIVAR ENCUESTA'),
+                      ],
                     ),
                   ),
                 ],
@@ -314,15 +289,12 @@ class _AddEditFormState extends State<AddEditForm> {
                         setState(() {
                           selectAll = value ?? false;
                           userSelection = List<bool>.filled(activeUsers.length, selectAll);
-                          selectedEmails.clear(); // Clear the list to avoid duplication
                           selectedUsers.clear(); // Clear the selected users list
                           if (selectAll) {
                             // If "Select All" is checked, add all user IDs to the list
                             selectedUsers.addAll(activeUsers
                               .where((user) => user.containsKey('userId') && user['userId'] != null)
                               .map((user) => user['userId']!));
-                            // Also add all emails to the list
-                            selectedEmails.addAll(activeUsers.map((user) => user['email']));
                           }
                         });
                       },
@@ -340,8 +312,7 @@ class _AddEditFormState extends State<AddEditForm> {
                     itemCount: activeUsers.length,
                     itemBuilder: (context, index) {
                       var user = activeUsers[index];
-                      var userId = activeUsersSnapshot.docs[index].id;
-                
+                      var userId = activeUsersSnapshot.docs[index].id;                
                       return Column(
                         children: [
                           Row(
@@ -361,10 +332,8 @@ class _AddEditFormState extends State<AddEditForm> {
                                       userSelection[index] = selected!;
                                       if (selected) {
                                         selectedUsers.add(userId);
-                                        selectedEmails.add(activeUsers[index]['email']);
                                       } else {
                                         selectedUsers.remove(userId);
-                                        selectedEmails.remove(activeUsers[index]['email']);
                                       }
                                     });
                                   },
@@ -416,17 +385,6 @@ class _AddEditFormState extends State<AddEditForm> {
 
     if (widget.id != null) {
       await _updateSurvey();
-      print(selectedEmails);
-      const String body = '''
-          Hola, el área técnica de CyMA te invita a responder la última encuesta, copia y pega el siguiente link en tu navegador para visitar la plataforma de Encuestas MOP.
-
-          https://javierrueda7.github.io/CYMA-EncuestasMOP/
-
-          Cordial saludo,
-
-          Equipo CyMA - Encuestas MOP          
-          ''';
-      manualSendEmail(selectedEmails, body);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('¡ENCUESTA ACTUALIZADA EXITOSAMENTE!')),
       );
@@ -440,17 +398,6 @@ class _AddEditFormState extends State<AddEditForm> {
       }
       
       await _addSurvey();
-      print(selectedEmails);
-      const String body = '''
-          Hola, el área técnica de CyMA te invita a responder la última encuesta, copia y pega el siguiente link en tu navegador para visitar la plataforma de Encuestas MOP.
-
-          https://javierrueda7.github.io/CYMA-EncuestasMOP/
-
-          Cordial saludo,
-
-          Equipo CyMA - Encuestas MOP
-          ''';
-      manualSendEmail(selectedEmails, body);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('¡ENCUESTA CREADA EXITOSAMENTE!')),
       );
@@ -469,7 +416,7 @@ class _AddEditFormState extends State<AddEditForm> {
       'startDate': startDateController.text,
       'endDate': endDateController.text,
       'days': daysController.text,
-      'status': selectedStatus,
+      'status': activarEncuesta == true ? 'ACTIVA' : selectedStatus,
       'hours': hoursController.text,
     });
 
@@ -491,7 +438,7 @@ class _AddEditFormState extends State<AddEditForm> {
       'startDate': startDateController.text,
       'endDate': endDateController.text,
       'days': daysController.text,
-      'status': selectedStatus,
+      'status': activarEncuesta == true && widget.status == 'CREADA' ? 'ACTIVA' : selectedStatus,
       'hours': hoursController.text,
     });
 
