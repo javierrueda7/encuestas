@@ -170,7 +170,9 @@ Future<List<Map<String, dynamic>>> getEncuestas() async {
   List<Map<String, dynamic>> formsList = [];
   final CollectionReference forms = db.collection('Encuestas');
 
-  QuerySnapshot form = await forms.get();
+  // Apply a query filter to fetch documents where status != "ELIMINADA"
+  QuerySnapshot form = await forms.where('status', isNotEqualTo: 'ELIMINADA').get();
+  
   for (var document in form.docs) {
     // Fetch the Usuarios subcollection
     final CollectionReference usuariosSubcollection = forms.doc(document.id).collection('Usuarios');

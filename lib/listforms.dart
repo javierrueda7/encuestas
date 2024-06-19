@@ -1,5 +1,5 @@
 
-// ignore_for_file: use_build_context_synchronously, deprecated_member_use
+// ignore_for_file: use_build_context_synchronously
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
@@ -196,8 +196,11 @@ class _ListFormsScreenState extends State<ListFormsScreen> {
 
   Future<void> eliminarItem(String documentId) async {
     try {
-      await FirebaseFirestore.instance.collection('Encuestas').doc(documentId).delete();
-      print('Documento eliminado con éxito');
+      await FirebaseFirestore.instance.collection('Encuestas').doc(documentId).update({
+        'status': 'ELIMINADA'
+      });
+      print('Estado del documento actualizado a ELIMINADA con éxito');
+      
       if (mounted) { // Verifica si el widget aún está montado
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('ENCUESTA ELIMINADA SATISFACTORIAMENTE')),
@@ -205,7 +208,7 @@ class _ListFormsScreenState extends State<ListFormsScreen> {
         _reloadList(); // Asegúrate de definir _reloadList en tu widget para actualizar la lista
       }
     } catch (e) {
-      print('Error al eliminar el documento: $e');
+      print('Error al actualizar el estado del documento: $e');
       if (mounted) { // Verifica si el widget aún está montado
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Error al eliminar el documento: $e')),
@@ -213,6 +216,7 @@ class _ListFormsScreenState extends State<ListFormsScreen> {
       }
     }
   }
+
 
   Future<void> sendEmail(String id, String nameEncuesta) async {
     // Obtener los IDs de los usuarios seleccionados de la subcolección 'Usuarios' dentro de 'Encuestas'
@@ -252,14 +256,16 @@ class _ListFormsScreenState extends State<ListFormsScreen> {
     String subject = "Invitación a resolver la encuesta $nameEncuesta";
     final String recipientsString = recipients.join(',');
     const String body = '''
-          Hola, el área técnica de CyMA te invita a responder la última encuesta, copia y pega el siguiente link en tu navegador para visitar la plataforma de Encuestas MOP.
+      Hola, el área técnica de CyMA te invita a responder la última encuesta, copia y pega el siguiente link en tu navegador para visitar la plataforma de Encuestas MOP.
 
-          https://javierrueda7.github.io/CYMA-EncuestasMOP/
+      https://javierrueda7.github.io/CYMA-EncuestasMOP/
 
-          Cordial saludo,
+      Si ya fue respondida, hacer caso omiso a este correo.
 
-          Equipo CyMA - Encuestas MOP          
-          ''';
+      Cordial saludo,
+
+      Equipo CyMA - Encuestas MOP          
+    ''';
 
     final String encodedSubject = Uri.encodeComponent(subject);
     final String encodedBody = Uri.encodeComponent(body);
@@ -270,12 +276,17 @@ class _ListFormsScreenState extends State<ListFormsScreen> {
       query: 'subject=$encodedSubject&body=$encodedBody',
     );
 
-    if (await canLaunch(emailLaunchUri.toString())) {
-      await launch(emailLaunchUri.toString());
+    print('Email URI: ${emailLaunchUri.toString()}');
+
+    if (await canLaunchUrl(emailLaunchUri)) {
+      print('Launching email app...');
+      await launchUrl(emailLaunchUri);
     } else {
+      print('Could not launch $emailLaunchUri');
       throw 'Could not launch $emailLaunchUri';
     }
   }
+
 
   void confirmacionEmail(BuildContext context, String id, String nameEncuesta) {
     showDialog(
