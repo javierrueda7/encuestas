@@ -281,6 +281,7 @@ class _FormsPageState extends State<FormsPage> {
                 ElevatedButton(
                   onPressed: () async {
                     bool toReview = false;
+
                     // First, update the projects list with the latest controller values
                     setState(() {
                       for (int i = 0; i < projects.length; i++) {
@@ -289,7 +290,20 @@ class _FormsPageState extends State<FormsPage> {
                         projects[i]['hours'] = hoursControllers[i].text;
                       }
                     });
-            
+
+                    // Check if any hoursController is empty
+                    for (var controller in hoursControllers) {
+                      if (controller.text.isEmpty) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text('Por favor, complete todas las horas dedicadas.'),
+                            duration: Duration(seconds: 4),
+                          ),
+                        );
+                        return; // Prevent form submission if any hoursController is empty
+                      }
+                    }
+
                     // Then, handle new projects and activities
                     for (var project in projects) {
                       if (!projectsList.any((p) => p.name == project['projectName'])) {
@@ -299,7 +313,7 @@ class _FormsPageState extends State<FormsPage> {
                       } else {
                         project['project'] = projectsList.firstWhere((p) => p.name == project['projectName']).id;
                       }
-            
+
                       if (!activitiesList.any((a) => a.name == project['activityName'])) {
                         // String newActivityId = await saveParameter('Actividades', project['activityName'], 'PENDIENTE');
                         // project['activity'] = newActivityId;
@@ -308,20 +322,20 @@ class _FormsPageState extends State<FormsPage> {
                         project['activity'] = activitiesList.firstWhere((a) => a.name == project['activityName']).id;
                       }
                     }
-            
+
                     // Print all elements of the projects list with updated IDs
                     for (var project in projects) {
                       print("?idencuesta=${widget.idForm}&idusuario=${widget.uidUser}&proyecto=${project['project']}&actividad=${project['activity']}&horas=${project['hours']}&fecha=${DateTime.now()}");
                     }
-                    
-                    if(toReview){
+
+                    if (toReview) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
                           content: Text('Seleccione únicamente Actividades o Proyectos existentes.'),
                           duration: Duration(seconds: 4),
                         ),
                       );
-                      return;                      
+                      return;
                     } else {
                       List<String> projectStrings = [];
 
@@ -329,7 +343,7 @@ class _FormsPageState extends State<FormsPage> {
                         projectStrings.add("?idencuesta=${widget.idForm}&idusuario=${widget.uidUser}&proyecto=${project['project']}&actividad=${project['activity']}&horas=${project['hours']}&fecha=${DateTime.now()}");
                       }
 
-                      String resultString = projectStrings.join(';');                      
+                      String resultString = projectStrings.join(';');
                       print(resultString);
                       _submitForm();
                       FirebaseFirestore.instance.collection('Encuestas').doc(widget.idForm).collection('Usuarios').doc(widget.uidUser).update({
@@ -347,12 +361,11 @@ class _FormsPageState extends State<FormsPage> {
                       widget.reloadList();
                       Navigator.of(context).pop();
                     }
-            
+
                     // Implement additional submit functionality here (e.g., saving to Firestore)
                   },
                   child: Text('ENVIAR'),
                 ),
-            
               ],
             ),
           ),

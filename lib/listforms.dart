@@ -1,6 +1,10 @@
 
 // ignore_for_file: use_build_context_synchronously
 
+import 'dart:convert';
+import 'package:flutter/widgets.dart';
+import 'package:forms_app/accesstoken.dart';
+import 'package:http/http.dart' as http;
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:forms_app/addeditforms.dart';
@@ -100,13 +104,16 @@ class _ListFormsScreenState extends State<ListFormsScreen> {
                                   },
                                   icon: Icon(Icons.remove_red_eye_outlined, color: Colors.blue),
                                 ),                                
-                                IconButton(
-                                  onPressed: () {
-                                    if (item != null && item.containsKey('id') && item['data']['status'] == 'ACTIVA') {
-                                      confirmacionEmail(context, item['id'], item['data']['name']);
-                                    }
-                                  },
-                                  icon: Icon(Icons.email_outlined, color: item?['data']['status'] == 'ACTIVA' ?  Colors.green : Colors.grey),
+                                Visibility(
+                                  visible: false,
+                                  child: IconButton(
+                                    onPressed: () {
+                                      if (item != null && item.containsKey('id') && item['data']['status'] == 'ACTIVA') {
+                                        confirmacionEmail(context, item['id'], item['data']['name']);
+                                      }
+                                    },
+                                    icon: Icon(Icons.email_outlined, color: item?['data']['status'] == 'ACTIVA' ?  Colors.green : Colors.grey),
+                                  ),
                                 ),
                                 IconButton(
                                   onPressed: () {
@@ -217,79 +224,102 @@ class _ListFormsScreenState extends State<ListFormsScreen> {
     }
   }
 
-
-  Future<void> sendEmail(String id, String nameEncuesta) async {
-    // Obtener los IDs de los usuarios seleccionados de la subcolección 'Usuarios' dentro de 'Encuestas'
-    var selectedUsersSnapshot = await FirebaseFirestore.instance
-        .collection('Encuestas')
-        .doc(id)
-        .collection('Usuarios')
-        .get();
-
-    var selectedUsersIds = selectedUsersSnapshot.docs.map((doc) => doc.id).toList();
-
-    List<String> selectedEmails = [];
-
-    // Obtener los correos electrónicos de la colección principal 'Usuarios'
-    for (var userId in selectedUsersIds) {
-      var userDoc = await FirebaseFirestore.instance
-          .collection('Usuarios')
-          .doc(userId)
-          .get();
-          
-      var userData = userDoc.data();
-      if (userDoc.exists && userData != null && userData.containsKey('email')) {
-        selectedEmails.add(userData['email']);
-      }
-    }
-
-    setState(() {
-      // Aquí puedes actualizar el estado del widget si es necesario
+  Future<void> sendEmail(String accessToken, String toEmail, String subject, String content) async {
+    final url = Uri.parse('https://mail.zoho.com/api/accounts/$accountId/messages');
+    final headers = {
+      'Authorization': 'Zoho-oauthtoken $accessToken',
+      'Content-Type': 'application/json'
+    };
+    final body = jsonEncode({
+      'fromAddress': 'javieruedase@zohomail.com', // Reemplaza con tu dirección de correo electrónico
+      'toAddress': toEmail,
+      'subject': subject,
+      'content': content
     });
 
-    // selectedEmails ahora contiene todos los emails de los usuarios seleccionados.
-    print(selectedEmails);  // Para verificar la lista de correos electrónicos.
-    manualSendEmail(selectedEmails, nameEncuesta);
-  }
+    final response = await http.post(url, headers: headers, body: body);
 
-  Future<void> manualSendEmail(List<String> recipients, String nameEncuesta) async {
-    String subject = "Invitación a resolver la encuesta $nameEncuesta";
-    final String recipientsString = recipients.join(',');
-    const String body = '''
-      Hola, el área técnica de CyMA te invita a responder la última encuesta, copia y pega el siguiente link en tu navegador para visitar la plataforma de Encuestas MOP.
-
-      https://javierrueda7.github.io/CYMA-EncuestasMOP/
-
-      Si ya fue respondida, hacer caso omiso a este correo.
-
-      Cordial saludo,
-
-      Equipo CyMA - Encuestas MOP          
-    ''';
-
-    final String encodedSubject = Uri.encodeComponent(subject);
-    final String encodedBody = Uri.encodeComponent(body);
-
-    final Uri emailLaunchUri = Uri(
-      scheme: 'mailto',
-      path: recipientsString,
-      query: 'subject=$encodedSubject&body=$encodedBody',
-    );
-
-    print('Email URI: ${emailLaunchUri.toString()}');
-
-    try {
-      if (await canLaunchUrl(emailLaunchUri)) {
-        print('Launching email app...');
-        await launchUrl(emailLaunchUri);
-      } else {
-        print('Could not launch $emailLaunchUri');
-        throw 'Could not launch $emailLaunchUri';
-      }
-    } catch (e) {
-      print('Error launching email app: $e');
+    if (response.statusCode == 200) {
+      print('¡Correo electrónico enviado correctamente!');
+    } else {
+      print('Error al enviar el correo electrónico: ${response.body}');
     }
   }
+
+
+
+  // Future<void> sendEmail(String id, String nameEncuesta) async {
+  //   // Obtener los IDs de los usuarios seleccionados de la subcolección 'Usuarios' dentro de 'Encuestas'
+  //   var selectedUsersSnapshot = await FirebaseFirestore.instance
+  //       .collection('Encuestas')
+  //       .doc(id)
+  //       .collection('Usuarios')
+  //       .get();
+
+  //   var selectedUsersIds = selectedUsersSnapshot.docs.map((doc) => doc.id).toList();
+
+  //   List<String> selectedEmails = [];
+
+  //   // Obtener los correos electrónicos de la colección principal 'Usuarios'
+  //   for (var userId in selectedUsersIds) {
+  //     var userDoc = await FirebaseFirestore.instance
+  //         .collection('Usuarios')
+  //         .doc(userId)
+  //         .get();
+          
+  //     var userData = userDoc.data();
+  //     if (userDoc.exists && userData != null && userData.containsKey('email')) {
+  //       selectedEmails.add(userData['email']);
+  //     }
+  //   }
+
+  //   setState(() {
+  //     // Aquí puedes actualizar el estado del widget si es necesario
+  //   });
+
+  //   // selectedEmails ahora contiene todos los emails de los usuarios seleccionados.
+  //   print(selectedEmails);  // Para verificar la lista de correos electrónicos.
+  //   manualSendEmail(selectedEmails, nameEncuesta);
+  // }
+
+  // Future<void> manualSendEmail(List<String> recipients, String nameEncuesta) async {
+  //   String subject = "Invitación a resolver la encuesta $nameEncuesta";
+  //   final String recipientsString = recipients.join(',');
+  //   const String body = '''
+  //     Hola, el área técnica de CyMA te invita a responder la última encuesta, copia y pega el siguiente link en tu navegador para visitar la plataforma de Encuestas MOP.
+
+  //     https://javierrueda7.github.io/CYMA-EncuestasMOP/
+
+  //     Si ya fue respondida, hacer caso omiso a este correo.
+
+  //     Cordial saludo,
+
+  //     Equipo CyMA - Encuestas MOP          
+  //   ''';
+
+  //   final String encodedSubject = Uri.encodeComponent(subject);
+  //   final String encodedBody = Uri.encodeComponent(body);
+
+  //   final Uri emailLaunchUri = Uri(
+  //     scheme: 'mailto',
+  //     path: recipientsString,
+  //     query: 'subject=$encodedSubject&body=$encodedBody',
+  //   );
+
+  //   print('Email URI: ${emailLaunchUri.toString()}');
+
+  //   try {
+  //     if (await canLaunchUrl(emailLaunchUri)) {
+  //       print('Launching email app...');
+  //       await launchUrl(emailLaunchUri);
+  //     } else {
+  //       print('Could not launch $emailLaunchUri');
+  //       throw 'Could not launch $emailLaunchUri';
+  //     }
+  //   } catch (e) {
+  //     print('Error launching email app: $e');
+  //   }
+  // }
 
 
 
@@ -311,7 +341,19 @@ class _ListFormsScreenState extends State<ListFormsScreen> {
               child: Text('ENVIAR INVITACIONES'),
               onPressed: () async {
                 Navigator.of(context).pop(); // Cierra el diálogo
-                await sendEmail(id, nameEncuesta); // Llama a la función de eliminación
+                //await sendEmail(id, nameEncuesta); // Llama a la función de eliminación
+                try {
+                  final accessToken = await getAccessToken();
+                  await sendEmail(
+                    accessToken,
+                    'javieruedase@gmail.com',
+                    'Test Subject',
+                    'Hello, this is a test email from Flutter!',
+                  );
+                } catch (e) {
+                  print('Error: $e');
+                }
+
               },
             ),
           ],

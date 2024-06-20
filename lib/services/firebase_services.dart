@@ -207,29 +207,35 @@ Future<List<Map<String, dynamic>>> getEncuestasUser(String searchString) async {
   QuerySnapshot encuestasSnapshot = await encuestasCollection.get();
   
   for (var encuestaDoc in encuestasSnapshot.docs) {
-    // Reference to the "Usuarios" subcollection within the current "Encuesta" document
-    final CollectionReference usuariosCollection = encuestaDoc.reference.collection('Usuarios');
-    
-    // Check if the given string matches any document ID within the "Usuarios" subcollection
-    DocumentSnapshot usuarioDoc = await usuariosCollection.doc(searchString).get();
-    
-    // If a document with the matching ID is found in the subcollection
-    if (usuarioDoc.exists) {
-      // Create a map for the "Encuesta" document
-      Map<String, dynamic> encuesta = {
-        'id': encuestaDoc.id,
-        'data': encuestaDoc.data(),
-        'user': usuarioDoc.data()
-      };
+    // Get the data of the current "Encuesta" document and check if it's null
+    var encuestaData = encuestaDoc.data() as Map<String, dynamic>?;
+    if (encuestaData != null && encuestaData['status'] != 'ELIMINADA') {
+      // Reference to the "Usuarios" subcollection within the current "Encuesta" document
+      final CollectionReference usuariosCollection = encuestaDoc.reference.collection('Usuarios');
       
-      // Add the map to the list
-      formsList.add(encuesta);
+      // Check if the given string matches any document ID within the "Usuarios" subcollection
+      DocumentSnapshot usuarioDoc = await usuariosCollection.doc(searchString).get();
+      
+      // If a document with the matching ID is found in the subcollection
+      if (usuarioDoc.exists) {
+        // Create a map for the "Encuesta" document
+        Map<String, dynamic> encuesta = {
+          'id': encuestaDoc.id,
+          'data': encuestaData,
+          'user': usuarioDoc.data() as Map<String, dynamic>?
+        };
+        
+        // Add the map to the list
+        formsList.add(encuesta);
+      }
     }
-  }  formsList.sort((a, b) => b['id'].compareTo(a['id']));
+  }
+  
+  // Sort the list by 'id' in descending order
+  formsList.sort((a, b) => b['id'].compareTo(a['id']));
 
   return formsList;
 }
-
 
 Future<String> saveParameter(String param, String nombre, String estado) async {
   // Get a reference to the collection
