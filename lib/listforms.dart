@@ -278,14 +278,19 @@ class _ListFormsScreenState extends State<ListFormsScreen> {
 
     print('Email URI: ${emailLaunchUri.toString()}');
 
-    if (await canLaunchUrl(emailLaunchUri)) {
-      print('Launching email app...');
-      await launchUrl(emailLaunchUri);
-    } else {
-      print('Could not launch $emailLaunchUri');
-      throw 'Could not launch $emailLaunchUri';
+    try {
+      if (await canLaunchUrl(emailLaunchUri)) {
+        print('Launching email app...');
+        await launchUrl(emailLaunchUri);
+      } else {
+        print('Could not launch $emailLaunchUri');
+        throw 'Could not launch $emailLaunchUri';
+      }
+    } catch (e) {
+      print('Error launching email app: $e');
     }
   }
+
 
 
   void confirmacionEmail(BuildContext context, String id, String nameEncuesta) {
