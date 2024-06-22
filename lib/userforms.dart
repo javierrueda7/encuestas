@@ -64,15 +64,15 @@ class _ListUserFormsState extends State<ListUserForms> {
                       itemBuilder: (context, index) {
                         final item = snapshot.data?[index];
                         return ListTile(
-                          leading: Text(item?['id'], style: TextStyle(fontSize: 12),),
+                          leading: Text(item?['id'], style: TextStyle(fontSize: 16),),
                           title: Text(item?['data']['name']),
                           subtitle: Text(item?['data']['startDate'] + ' - ' + item?['data']['endDate']),
                           trailing: item?['user']['status'] == 'ENVIADA' ? Column(
                             children: [
-                              Text(item?['user']['status'], style: TextStyle(fontSize: 11),),
-                              Text(DateFormat('dd-MM-yyyy HH:mm').format(item?['user']['date'].toDate()), style: TextStyle(fontSize: 11),)
+                              Text(item?['user']['status'], style: TextStyle(fontSize: 14),),
+                              Text(DateFormat('dd-MM-yyyy HH:mm').format(item?['user']['date'].toDate()), style: TextStyle(fontSize: 12),)
                             ],
-                          ) : Text(item?['data']['status'], style: TextStyle(fontSize: 12),),
+                          ) : Text(item?['data']['status'], style: TextStyle(fontSize: 14),),
                           onTap: () {
                             if(item?['data']['status'] == 'ACTIVA' && item?['user']['status'] == 'ABIERTA'){
                               Navigator.push(

@@ -67,87 +67,111 @@ class _ListFormsScreenState extends State<ListFormsScreen> {
                       itemCount: snapshot.data?.length,
                       itemBuilder: (context, index) {
                         final item = snapshot.data?[index];
-                        return ListTile(
-                          leading: Text(
-                            item?['id'] ?? '',
-                            style: TextStyle(fontSize: 12),
-                          ),
-                          title: Text(item?['data']['name'] ?? ''),
-                          subtitle: Text('${item?['data']['startDate']} - ${item?['data']['endDate']}'),
-                          trailing: SizedBox(
-                            width: 300, // Ajusta el ancho según sea necesario
-                            child: Row(
-                              mainAxisSize: MainAxisSize.max,
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Column(
-                                  crossAxisAlignment: CrossAxisAlignment.end,
+                        return SizedBox(
+                          height: 100, // Adjust height as necessary
+                          child: GestureDetector(
+                            child: Card(
+                              child: Padding(
+                                padding: const EdgeInsets.all(10.0),
+                                child: Row(
                                   children: [
                                     Text(
-                                      '${item?['data']['status'] ?? ''}',
-                                      style: TextStyle(fontSize: 11),
+                                      item?['id'] ?? '',
+                                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                                     ),
-                                    Text(
-                                      'USUARIOS ASOCIADOS: ${item?['usuariosTotal'] ?? ''}',
-                                      style: TextStyle(fontSize: 11),
+                                    SizedBox(width: 20),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.center,
+                                        mainAxisAlignment: MainAxisAlignment.center,
+                                        children: [
+                                          Text(item?['data']['name'] ?? '',
+                                              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                                          Text(
+                                              '${item?['data']['startDate']} - ${item?['data']['endDate']}', style: TextStyle(fontSize: 15),),
+                                        ],
+                                      ),
                                     ),
-                                    Text(
-                                      'USUARIOS POR RESPONDER: ${item?['usuariosNonEnviada'] ?? ''}',
-                                      style: TextStyle(fontSize: 11),
+                                    SizedBox(width: 20),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.end,
+                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          Text(
+                                            '${item?['data']['status'] ?? ''}',
+                                            style: TextStyle(fontSize: 14),
+                                          ),
+                                          Text(
+                                            'USUARIOS ASOCIADOS: ${item?['usuariosTotal'] ?? ''}',
+                                            style: TextStyle(fontSize: 14),
+                                          ),
+                                          Text(
+                                            'USUARIOS POR RESPONDER: ${item?['usuariosNonEnviada'] ?? ''}',
+                                            style: TextStyle(fontSize: 14),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    SizedBox(width: 8),
+                                    IconButton(
+                                      onPressed: () {
+                                        _loadAndShowUsers(context, item?['id']);
+                                      },
+                                      icon: Icon(Icons.remove_red_eye_outlined, color: Colors.blue),
+                                    ),
+                                    Visibility(
+                                      visible: false,
+                                      child: IconButton(
+                                        onPressed: () {
+                                          if (item != null &&
+                                              item.containsKey('id') &&
+                                              item['data']['status'] == 'ACTIVA') {
+                                            confirmacionEmail(context, item['id'], item['data']['name']);
+                                          }
+                                        },
+                                        icon: Icon(Icons.email_outlined,
+                                            color: item?['data']['status'] == 'ACTIVA'
+                                                ? Colors.green
+                                                : Colors.grey),
+                                      ),
+                                    ),                                    
+                                    IconButton(
+                                      onPressed: () {
+                                        if (item != null &&
+                                            item.containsKey('id') &&
+                                            item['data']['status'] == 'CREADA') {
+                                          mostrarDialogoConfirmacion(context, item['id']);
+                                        } else {
+                                          print('Error: ID del documento no disponible');
+                                        }
+                                      },
+                                      icon: Icon(Icons.delete_outline_outlined,
+                                          color: item?['data']['status'] == 'CREADA'
+                                              ? Colors.red
+                                              : Colors.grey),
                                     ),
                                   ],
                                 ),
-                                SizedBox(width: 8), // Espacio entre la columna y los iconos
-                                IconButton(
-                                  onPressed: () {
-                                    _loadAndShowUsers(context, item?['id']);
-                                  },
-                                  icon: Icon(Icons.remove_red_eye_outlined, color: Colors.blue),
-                                ),                                
-                                Visibility(
-                                  visible: false,
-                                  child: IconButton(
-                                    onPressed: () {
-                                      if (item != null && item.containsKey('id') && item['data']['status'] == 'ACTIVA') {
-                                        confirmacionEmail(context, item['id'], item['data']['name']);
-                                      }
-                                    },
-                                    icon: Icon(Icons.email_outlined, color: item?['data']['status'] == 'ACTIVA' ?  Colors.green : Colors.grey),
-                                  ),
-                                ),
-                                IconButton(
-                                  onPressed: () {
-                                    // Asegúrate de que item contenga el campo 'id'
-                                    if (item != null && item.containsKey('id') && item['data']['status'] == 'CREADA') {
-                                      mostrarDialogoConfirmacion(context, item['id']);
-                                    } else {
-                                      print('Error: ID del documento no disponible');
-                                    }
-                                  },
-                                  icon: Icon(Icons.delete_outline_outlined, color: item?['data']['status'] == 'CREADA' ?  Colors.red : Colors.grey),
-
-                                ),
-                              ],
+                              ),
                             ),
-                          ),
-
-                          onTap: () {
-                            // Open edit dialog or perform edit action here
-                            showDialog(
-                              context: context,
-                              builder: (BuildContext context) {
-                                return AddEditForm(
-                                  reloadList: _reloadList,
-                                  id: item?['id'], // Accessing the document ID
-                                  name: item?['data']['name'],
-                                  startDate: item?['data']['startDate'],
-                                  endDate: item?['data']['endDate'],
-                                  days: item?['data']['days'],
-                                  status: item?['data']['status']
-                                );
-                              },
-                            );
-                          },
+                            onTap: (){ 
+                              showDialog(
+                                context: context,
+                                builder: (BuildContext context) {
+                                  return AddEditForm(
+                                    reloadList: _reloadList,
+                                    id: item?['id'],
+                                    name: item?['data']['name'],
+                                    startDate: item?['data']['startDate'],
+                                    endDate: item?['data']['endDate'],
+                                    days: item?['data']['days'],
+                                    status: item?['data']['status'],
+                                  );
+                                }
+                              );
+                            },
+                          )
                         );
                       },
                     );

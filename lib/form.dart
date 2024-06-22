@@ -293,7 +293,7 @@ class _FormsPageState extends State<FormsPage> {
 
                     // Check if any hoursController is empty
                     for (var controller in hoursControllers) {
-                      if (controller.text.isEmpty) {
+                      if (controller.text.isEmpty || controller.text == '0') {
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
                             content: Text('Por favor, complete todas las horas dedicadas.'),
@@ -373,7 +373,9 @@ class _FormsPageState extends State<FormsPage> {
       ),
     );
   }
+
   late final _formKey;
+
   void _submitForm() async {
     const String scriptURL = 'https://script.google.com/macros/s/AKfycbwl1b-qt61HCxZG2QtLYNsqvmAgVQ6NRUmEGbV0SQQaL4Hl6Yh3pwF2WpNkk-EJrAlq/exec';
 

@@ -62,7 +62,7 @@ class _ListParameterScreenState extends State<ListParameterScreen> {
                         return ListTile(
                           leading: SizedBox(child: item?['data']['status'] == 'PENDIENTE' ? Icon(Icons.circle, color: Colors.red,) : SizedBox()),
                           title: Text(item?['data']['name']),
-                          trailing: Text(item?['data']['status'], style: TextStyle(fontSize: 12),),
+                          trailing: Text(item?['data']['status'], style: TextStyle(fontSize: 14),),
                           onTap: () {
                             // Open edit dialog or perform edit action here
                             showDialog(

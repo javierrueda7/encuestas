@@ -117,6 +117,7 @@ class _AddEditFormState extends State<AddEditForm> {
 
           data['positionName'] = positionName;
           data['professionName'] = professionName;
+          data['userId'] = doc.id;
 
           return data;
         }).toList();
@@ -284,21 +285,25 @@ class _AddEditFormState extends State<AddEditForm> {
                   children: [
                     Text('SELECCIONAR TODOS'),
                     Checkbox(
-                      value: selectAll,
-                      onChanged: (bool? value) {
-                        setState(() {
-                          selectAll = value ?? false;
-                          userSelection = List<bool>.filled(activeUsers.length, selectAll);
-                          selectedUsers.clear(); // Clear the selected users list
-                          if (selectAll) {
-                            // If "Select All" is checked, add all user IDs to the list
-                            selectedUsers.addAll(activeUsers
-                              .where((user) => user.containsKey('userId') && user['userId'] != null)
-                              .map((user) => user['userId']!));
-                          }
-                        });
-                      },
-                    ),
+                    value: selectAll,
+                    onChanged: (bool? value) {
+                      setState(() {
+                        selectAll = value ?? false;
+                        userSelection = List<bool>.filled(activeUsers.length, selectAll);
+                        selectedUsers.clear(); // Clear the selected users list
+                        if (selectAll) {
+                          // If "Select All" is checked, add all user IDs to the list
+                          selectedUsers.addAll(activeUsers
+                            .where((user) => user.containsKey('userId') && user['userId'] != null)
+                            .map((user) => user['userId']!));
+                          // Also add all emails to the list
+                          print(activeUsers);
+                          print(selectedUsers);
+                        }
+                      });
+                    },
+                  ),
+
                   ],
                 ),
               ),
