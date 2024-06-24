@@ -1,4 +1,4 @@
-// ignore_for_file: prefer_typing_uninitialized_variables
+// ignore_for_file: prefer_typing_uninitialized_variables, use_build_context_synchronously
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
@@ -129,7 +129,7 @@ class _FormsPageState extends State<FormsPage> {
 
   Future<List<Parametro>> getParamwithId(String param) async {
     List<Parametro> parametros = [];
-    QuerySnapshot queryParametros = await FirebaseFirestore.instance.collection(param).where('status', isEqualTo: 'ACTIVO').get();
+    QuerySnapshot queryParametros = await FirebaseFirestore.instance.collection(param).where('status', isNotEqualTo: 'INACTIVO').get();
     for (var doc in queryParametros.docs) {
       parametros.add(Parametro(id: doc.id, name: doc['name']));
     }
@@ -343,16 +343,18 @@ class _FormsPageState extends State<FormsPage> {
                         // Then, handle new projects and activities
                         for (var project in projects) {
                           if (!projectsList.any((p) => p.name == project['projectName'])) {
-                            // String newProjectId = await saveParameter('Proyectos', project['projectName'], 'PENDIENTE');
-                            // project['project'] = newProjectId;
-                            toReview = true;
+                            //Pendientes de revision admin
+                            String newProjectId = await saveParameter('Proyectos', project['projectName'], 'PENDIENTE');
+                            project['project'] = newProjectId;
+                            //toReview = true;
                           } else {
                             project['project'] = projectsList.firstWhere((p) => p.name == project['projectName']).id;
                           }                
                           if (!activitiesList.any((a) => a.name == project['activityName'])) {
-                            // String newActivityId = await saveParameter('Actividades', project['activityName'], 'PENDIENTE');
-                            // project['activity'] = newActivityId;
-                            toReview = true;
+                            //Pendientes de revision admin
+                            String newActivityId = await saveParameter('Actividades', project['activityName'], 'PENDIENTE');
+                            project['activity'] = newActivityId;
+                            //toReview = true;
                           } else {
                             project['activity'] = activitiesList.firstWhere((a) => a.name == project['activityName']).id;
                           }
@@ -361,15 +363,7 @@ class _FormsPageState extends State<FormsPage> {
                         for (var project in projects) {
                           print("?idencuesta=${widget.idForm}&idusuario=${widget.uidUser}&proyecto=${project['project']}&actividad=${project['activity']}&horas=${project['hours']}&fecha=${DateTime.now()}");
                         }                
-                        if (toReview) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text('Seleccione únicamente Actividades o Proyectos existentes.'),
-                              duration: Duration(seconds: 4),
-                            ),
-                          );
-                          return;
-                        } else {
+                        if (!toReview) {
                           List<String> projectStrings = [];                
                           for (var project in projects) {
                             projectStrings.add("?idencuesta=${widget.idForm}&idusuario=${widget.uidUser}&proyecto=${project['project']}&actividad=${project['activity']}&horas=${project['hours']}&fecha=${DateTime.now()}");
@@ -391,7 +385,16 @@ class _FormsPageState extends State<FormsPage> {
                           );
                           widget.reloadList();
                           Navigator.of(context).pop();
-                        }                
+                        // ignore: dead_code
+                        } else {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text('Seleccione únicamente Actividades o Proyectos existentes.'),
+                              duration: Duration(seconds: 4),
+                            ),
+                          );
+                          return;
+                        }      
                         // Implement additional submit functionality here (e.g., saving to Firestore)
                       },
                       child: Text('GUARDAR'),
@@ -537,7 +540,7 @@ class _FormsPageState extends State<FormsPage> {
                   if (proyecto!.isEmpty) {
                     return 'SELECCIONE UN PROYECTO DE LA LISTA';
                   } else if (!projectsList.any((project) => project.name == proyecto)) {
-                    return 'PENDIENTE DE REVISIÓN POR UN ADMINISTRADOR';
+                    return 'SE CREARÁ UN NUEVO PROYECTO';
                   } else {
                     return null;
                   }
@@ -583,7 +586,7 @@ class _FormsPageState extends State<FormsPage> {
                   if (activity!.isEmpty) {
                     return 'SELECCIONE UNA ACTIVIDAD DE LA LISTA';
                   } else if (!activitiesList.any((act) => act.name == activity)) {
-                    return 'PENDIENTE DE REVISIÓN POR UN ADMINISTRADOR';
+                    return 'SE CREARÁ UNA NUEVA ACTIVIDAD';
                   } else {
                     return null;
                   }
