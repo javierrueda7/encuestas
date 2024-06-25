@@ -441,6 +441,7 @@ class _AddEditFormState extends State<AddEditForm> {
       'days': daysController.text,
       'status': activarEncuesta == true ? 'ACTIVA' : selectedStatus,
       'hours': hoursController.text,
+      'tipo': widget.tipo
     });
 
     // Retrieve the selected user IDs
