@@ -29,6 +29,7 @@ dependencies:
   flutter_localizations:
     sdk: flutter
   flutter_web_auth: ^0.5.0
+  mailer: ^6.1.0
 
 dev_dependencies:
   flutter_test:

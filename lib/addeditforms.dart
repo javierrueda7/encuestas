@@ -12,6 +12,7 @@ class AddEditForm extends StatefulWidget {
   final String? endDate;
   final String? days;
   final String? status;
+  final String tipo;
   final VoidCallback reloadList;
 
   AddEditForm({
@@ -21,6 +22,7 @@ class AddEditForm extends StatefulWidget {
     this.endDate,
     this.days,
     this.status,
+    required this.tipo,
     required this.reloadList,
   });
 
@@ -68,19 +70,35 @@ class _AddEditFormState extends State<AddEditForm> {
       });
     } else {
       setState(() {
-        selectAll = true;
+        selectAll = false;
       });
     }
   }
 
   Future<void> _loadActiveUsers() async {
     try {
-      activeUsersSnapshot = await FirebaseFirestore.instance
-          .collection('Usuarios')
-          .orderBy('name') // Order by 'name' field from A to Z
-          .where('status', isEqualTo: 'ACTIVO')
-          .where('role', isEqualTo: 'USUARIO')          
-          .get();
+      Query activeUsersQuery = FirebaseFirestore.instance
+        .collection('Usuarios')
+        .orderBy('name') // Order by 'name' field from A to Z
+        .where('status', isEqualTo: 'ACTIVO')
+        .where('role', isEqualTo: 'USUARIO');
+
+      if (widget.tipo == 'T') {
+        // No additional filters needed
+      } else if (widget.tipo == 'U') {
+        activeUsersQuery = activeUsersQuery
+          .where('position', isNotEqualTo: 'CG0007');
+      } else if (widget.tipo == 'G') {
+        activeUsersQuery = activeUsersQuery
+          .where('position', isEqualTo: 'CG0007');
+      }
+
+      try {
+        activeUsersSnapshot = await activeUsersQuery.get();
+      } catch (e) {
+        print('Error getting active users: $e');
+      }
+
 
       Map<String, String> positionNames = {};
       Map<String, String> professionNames = {};
@@ -127,7 +145,7 @@ class _AddEditFormState extends State<AddEditForm> {
         if (widget.id != null) {
           _loadSelectedUsers(widget.id!);
         } else {
-          userSelection = List<bool>.filled(activeUsers.length, true);
+          userSelection = List<bool>.filled(activeUsers.length, false);
         }
       });
     } catch (e) {
@@ -359,7 +377,7 @@ class _AddEditFormState extends State<AddEditForm> {
                 onPressed: () {
                   _saveOrEditSurvey();
                 },
-                child: Text('GUARDAR ENCUESTA'),
+                child: Text(activarEncuesta ? 'ENVIAR ENCUESTA' : 'GUARDAR ENCUESTA'),
               ),
             ],
           ),

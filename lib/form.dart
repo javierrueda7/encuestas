@@ -520,11 +520,16 @@ class _FormsPageState extends State<FormsPage> {
               child: TypeAheadFormField<Parametro>(
                 textFieldConfiguration: TextFieldConfiguration(
                   controller: projectController,
-                  enabled: widget.formState == 'ENVIADA' ? false : true,
+
+                  enabled: widget.formState != 'ENVIADA', // Más claro
                   decoration: InputDecoration(
                     labelText: 'PROYECTO',
+                    labelStyle: TextStyle(color: Colors.black),
                     border: OutlineInputBorder(),
                     contentPadding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+                  ),
+                  style: TextStyle(
+                    color: widget.formState == 'ENVIADA' ? Colors.black : null, // Cambia el color del texto si está deshabilitado
                   ),
                 ),
                 suggestionsCallback: getSugProjects,
@@ -566,11 +571,15 @@ class _FormsPageState extends State<FormsPage> {
               child: TypeAheadFormField<Parametro>(
                 textFieldConfiguration: TextFieldConfiguration(
                   controller: activityController,
-                  enabled: widget.formState == 'ENVIADA' ? false : true,
+                  enabled: widget.formState != 'ENVIADA', // Más claro
                   decoration: InputDecoration(
                     labelText: 'ACTIVIDAD',
+                    labelStyle: TextStyle(color: Colors.black),
                     border: OutlineInputBorder(),
                     contentPadding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+                  ),
+                  style: TextStyle(
+                    color: widget.formState == 'ENVIADA' ? Colors.black : null, // Cambia el color del texto si está deshabilitado
                   ),
                 ),
                 suggestionsCallback: getSugActivities,
@@ -612,15 +621,19 @@ class _FormsPageState extends State<FormsPage> {
               width: 200,
               child: TextFormField(
                 controller: hoursController,
-                readOnly: widget.formState == 'ENVIADA' ? true : false,
+                enabled: widget.formState != 'ENVIADA' ? true : false,
                 keyboardType: TextInputType.number,
                 inputFormatters: <TextInputFormatter>[
                   FilteringTextInputFormatter.digitsOnly
                 ],
                 decoration: InputDecoration(
                   labelText: 'HORAS DEDICADAS',
+                  labelStyle: TextStyle(color: Colors.black),
                   border: OutlineInputBorder(),
                   contentPadding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+                ),
+                style: TextStyle(
+                  color: widget.formState == 'ENVIADA' ? Colors.black : null, // Cambia el color del texto si está deshabilitado
                 ),
                 onChanged: (value) {
                   int? newValue = int.tryParse(value);

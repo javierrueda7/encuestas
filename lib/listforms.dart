@@ -167,6 +167,7 @@ class _ListFormsScreenState extends State<ListFormsScreen> {
                                     endDate: item?['data']['endDate'],
                                     days: item?['data']['days'],
                                     status: item?['data']['status'],
+                                    tipo: item?['data']['tipo'],
                                   );
                                 }
                               );
@@ -188,13 +189,51 @@ class _ListFormsScreenState extends State<ListFormsScreen> {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => AddEditForm(reloadList: _reloadList,)), // Navigate to the NewUserPage
-          );
+          modalTipoEncuesta(context);
         },
         child: Icon(Icons.add),
       ),
+    );
+  }
+
+  void modalTipoEncuesta(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('TIPO DE ENCUESTA'),
+          content: Text('¿PARA QUIÉN ESTÁ DESTINADA ESTA ENCUESTA?'),
+          actions: <Widget>[
+            TextButton(
+              child: Text('ENCUESTA PARA GERENTES'),
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => AddEditForm(tipo: 'G', reloadList: _reloadList,)), // Navigate to the NewUserPage
+                );
+              },
+            ),
+            TextButton(
+              child: Text('ENCUESTA PARA USUARIOS'),
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => AddEditForm(tipo: 'U', reloadList: _reloadList,)), // Navigate to the NewUserPage
+                );
+              },
+            ),
+            TextButton(
+              child: Text('ENCUESTA PARA TODOS'),
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => AddEditForm(tipo: 'T', reloadList: _reloadList,)), // Navigate to the NewUserPage
+                );
+              },
+            ),
+          ],
+        );
+      },
     );
   }
 
@@ -248,7 +287,7 @@ class _ListFormsScreenState extends State<ListFormsScreen> {
     }
   }
 
-  Future<void> sendEmail(String accessToken, String toEmail, String subject, String content) async {
+  Future<void> sendZohoEmail(String accessToken, String toEmail, String subject, String content) async {
     final url = Uri.parse('https://mail.zoho.com/api/accounts/$accountId/messages');
     final headers = {
       'Authorization': 'Zoho-oauthtoken $accessToken',
@@ -368,7 +407,7 @@ class _ListFormsScreenState extends State<ListFormsScreen> {
                 //await sendEmail(id, nameEncuesta); // Llama a la función de eliminación
                 try {
                   final accessToken = await getAccessToken();
-                  await sendEmail(
+                  await sendZohoEmail(
                     accessToken,
                     'javieruedase@gmail.com',
                     'Test Subject',
@@ -426,6 +465,7 @@ class _ListFormsScreenState extends State<ListFormsScreen> {
           userNames.add(userData['name']);
         }
       }
+      userNames.sort((b, a) => b.compareTo(a));
 
       // Cerrar el círculo de carga
       Navigator.of(context).pop();

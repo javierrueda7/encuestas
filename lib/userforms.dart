@@ -68,37 +68,49 @@ class _ListUserFormsState extends State<ListUserForms> {
                           leading: Text(item?['id'], style: TextStyle(fontSize: 16),),
                           title: Text(item?['data']['name']),
                           subtitle: Text(item?['data']['startDate'] + ' - ' + item?['data']['endDate']),
-                          trailing: item?['user']['status'] != 'ABIERTA' ? Column(
-                            children: [
-                              Text(item?['user']['status'], style: TextStyle(fontSize: 14),),
-                              Text(DateFormat('dd-MM-yyyy HH:mm').format(item?['user']['date'].toDate()), style: TextStyle(fontSize: 12),)
-                            ],
-                          ) : Text(item?['data']['status'], style: TextStyle(fontSize: 14),),
-                          onTap: () {
-                            if(item?['data']['status'] == 'ACTIVA'){
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(builder: (context) => FormsPage(
-                                  idForm: item?['id'], // Accessing the document ID
-                                  formName: item?['data']['name'],
-                                  dates: item?['data']['startDate'] + ' - ' + item?['data']['endDate'],
-                                  uidUser: uid,
-                                  hours: ((int.parse(item?['data']['days']))*9).toString(),
-                                  formState: item?['user']['status'],
-                                  answers: item?['user']['status'] == 'ABIERTA' ?  'NULL' : item?['user']['answer'],
-                                  date: item?['user']['status'] == 'ABIERTA' ? DateTime.now() : (item?['user']['date'] as Timestamp).toDate(),
-                                  reloadList: _reloadList,
-                                )), // Navigate to the NewUserPage
-                              );
-                            } else if(item?['user']['status'] == 'ENVIADA'){
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text('La encuesta ya ha sido respondida.'),
-                                  duration: Duration(seconds: 4),
-                                ),
-                              );
-                            }
-                          },
+                          trailing: SizedBox(
+                            width: 150,
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.end,
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              children: [
+                                item?['user']['status'] != 'ABIERTA' ? Column(
+                                  crossAxisAlignment: CrossAxisAlignment.end,
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Text(item?['user']['status'], style: TextStyle(fontSize: 14),),
+                                    Text(DateFormat('dd-MM-yyyy HH:mm').format(item?['user']['date'].toDate()), style: TextStyle(fontSize: 12),)
+                                  ],
+                                ) : Text(item?['data']['status'], style: TextStyle(fontSize: 14),),
+                                SizedBox(width: 8,),
+                                IconButton(onPressed: () {
+                                  if(item?['data']['status'] == 'ACTIVA'){
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(builder: (context) => FormsPage(
+                                        idForm: item?['id'], // Accessing the document ID
+                                        formName: item?['data']['name'],
+                                        dates: item?['data']['startDate'] + ' - ' + item?['data']['endDate'],
+                                        uidUser: uid,
+                                        hours: ((int.parse(item?['data']['days']))*9).toString(),
+                                        formState: item?['user']['status'],
+                                        answers: item?['user']['status'] == 'ABIERTA' ?  'NULL' : item?['user']['answer'],
+                                        date: item?['user']['status'] == 'ABIERTA' ? DateTime.now() : (item?['user']['date'] as Timestamp).toDate(),
+                                        reloadList: _reloadList,
+                                      )), // Navigate to the NewUserPage
+                                    );
+                                  } else if(item?['user']['status'] == 'ENVIADA'){
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text('La encuesta ya ha sido respondida.'),
+                                        duration: Duration(seconds: 4),
+                                      ),
+                                    );
+                                  }
+                                }, icon: item?['user']['status'] == 'ENVIADA' ? Icon(Icons.remove_red_eye_outlined, color: Colors.blueAccent,) : Icon(Icons.edit, color: Colors.blueAccent))
+                              ],
+                            ),
+                          ),
                         );
                       },
                     );

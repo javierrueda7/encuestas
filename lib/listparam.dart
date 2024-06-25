@@ -134,7 +134,11 @@ class _AddEditParamState extends State<AddEditParam> {
     super.initState();
     id = widget.id ?? '';
     nameController = TextEditingController(text: widget.name ?? '');
-    selectedEstado = widget.status ?? 'ACTIVO';
+    if(widget.status == 'PENDIENTE'){
+      selectedEstado = 'ACTIVO';
+    } else {
+      selectedEstado = widget.status ?? 'ACTIVO';
+    }
     isEditing = widget.id != null; // If name and status are not null, it's an edit operation
   }
 
@@ -158,7 +162,6 @@ class _AddEditParamState extends State<AddEditParam> {
                   selectedEstado = value ?? 'ACTIVO';
                 });
               }, initialValue: selectedEstado, allowChange: true),
-              SizedBox(height: 20),
             ],
           ),
         ),
