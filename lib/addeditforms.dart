@@ -248,7 +248,7 @@ class _AddEditFormState extends State<AddEditForm> {
                             });
                           } : null,
                         ),
-                        Text('ABRIR ENCUESTA'),
+                        Text('ACTIVAR ENCUESTA'),
                       ],
                     ),
                   ),
@@ -382,7 +382,7 @@ class _AddEditFormState extends State<AddEditForm> {
                 onPressed: () {
                   _saveOrEditSurvey();
                 },
-                child: Text(activarEncuesta ? 'ENVIAR ENCUESTA' : 'GUARDAR ENCUESTA'),
+                child: Text(activarEncuesta ? 'ABRIR ENCUESTA' : 'GUARDAR ENCUESTA'),
               ),
             ],
           ),
