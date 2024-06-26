@@ -129,7 +129,12 @@ class _FormsPageState extends State<FormsPage> {
 
   Future<List<Parametro>> getParamwithId(String param) async {
     List<Parametro> parametros = [];
-    QuerySnapshot queryParametros = await FirebaseFirestore.instance.collection(param).where('status', isNotEqualTo: 'INACTIVO').get();
+    QuerySnapshot queryParametros;
+    if(widget.formState == 'ENVIADA'){
+      queryParametros = await FirebaseFirestore.instance.collection(param).get();
+    } else {
+      queryParametros = await FirebaseFirestore.instance.collection(param).where('status', isNotEqualTo: 'INACTIVO').get();
+    }
     for (var doc in queryParametros.docs) {
       parametros.add(Parametro(id: doc.id, name: doc['name']));
     }
@@ -284,7 +289,7 @@ class _FormsPageState extends State<FormsPage> {
                                   });
                                 } : null,
                               ),
-                              Text('ENCUESTA TERMINADA'),
+                              Text('ENVIAR ENCUESTA'),
                             ],
                           ),
                         ),
@@ -327,13 +332,47 @@ class _FormsPageState extends State<FormsPage> {
                             projects[i]['activityName'] = activityControllers[i].text;
                             projects[i]['hours'] = hoursControllers[i].text;
                           }
-                        });                
+                        });
+                        if(projects.isEmpty && enviarEncuesta){
+                          ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text('Por favor, agregue al menos una actividad.'),
+                                duration: Duration(seconds: 4),
+                              ),
+                            );
+                            return;
+                        }
+
+                        for (var controller in activityControllers) {
+                          if (controller.text.isEmpty) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text('Por favor, complete todos los campos de actividades.'),
+                                duration: Duration(seconds: 4),
+                              ),
+                            );
+                            return; // Prevent form submission if any hoursController is empty
+                          }
+                        }     
+
+                        for (var controller in projectControllers) {
+                          if (controller.text.isEmpty) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text('Por favor, complete todos los campos de proyectos.'),
+                                duration: Duration(seconds: 4),
+                              ),
+                            );
+                            return; // Prevent form submission if any hoursController is empty
+                          }
+                        }     
+
                         // Check if any hoursController is empty
                         for (var controller in hoursControllers) {
                           if (controller.text.isEmpty || controller.text == '0') {
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
-                                content: Text('Por favor, complete todas las horas dedicadas.'),
+                                content: Text('Por favor, complete todos los campos de horas.'),
                                 duration: Duration(seconds: 4),
                               ),
                             );
@@ -397,7 +436,7 @@ class _FormsPageState extends State<FormsPage> {
                         }      
                         // Implement additional submit functionality here (e.g., saving to Firestore)
                       },
-                      child: Text('GUARDAR'),
+                      child: Text(enviarEncuesta ? 'ENVIAR ENCUESTA' : 'GUARDAR ENCUESTA'),
                     ),
                   ],
                 );

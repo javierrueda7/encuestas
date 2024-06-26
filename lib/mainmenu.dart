@@ -184,7 +184,7 @@ class _MainMenuState extends State<MainMenu> {
                               '_blank', // This opens the link in a new tab or window
                             ]);
                           },
-                          child: Text('CONSULTAS POWER BI'),
+                          child: Text('CONSULTAS'),
                         ),
                       ],
                     ),

@@ -248,7 +248,7 @@ class _AddEditFormState extends State<AddEditForm> {
                             });
                           } : null,
                         ),
-                        Text('ACTIVAR ENCUESTA'),
+                        Text('ABRIR ENCUESTA'),
                       ],
                     ),
                   ),
