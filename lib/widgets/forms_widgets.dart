@@ -107,9 +107,12 @@ Widget buildTextField(String label, TextEditingController controller, bool read)
   controller.addListener(() {
     final text = controller.text.toUpperCase();
     if (controller.text != text) {
+      final cursorPosition = controller.selection.baseOffset;
       controller.value = controller.value.copyWith(
         text: text,
-        selection: TextSelection.collapsed(offset: text.length),
+        selection: TextSelection.collapsed(
+          offset: cursorPosition > text.length ? text.length : cursorPosition,
+        ),
       );
     }
   });
@@ -126,6 +129,7 @@ Widget buildTextField(String label, TextEditingController controller, bool read)
     ),
   );
 }
+
 
 Widget buildEmailField(String label, TextEditingController controller, bool read) {
   controller.addListener(() {

@@ -209,7 +209,7 @@ Future<List<Map<String, dynamic>>> getEncuestasUser(String searchString) async {
   for (var encuestaDoc in encuestasSnapshot.docs) {
     // Get the data of the current "Encuesta" document and check if it's null
     var encuestaData = encuestaDoc.data() as Map<String, dynamic>?;
-    if (encuestaData != null && encuestaData['status'] != 'ELIMINADA') {
+    if (encuestaData != null && encuestaData['status'] != 'ELIMINADA' && encuestaData['status'] != 'CREADA') {
       // Reference to the "Usuarios" subcollection within the current "Encuesta" document
       final CollectionReference usuariosCollection = encuestaDoc.reference.collection('Usuarios');
       

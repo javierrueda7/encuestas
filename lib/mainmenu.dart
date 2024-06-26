@@ -1,7 +1,8 @@
-// ignore_for_file: library_private_types_in_public_api, unrelated_type_equality_checks
+// ignore_for_file: library_private_types_in_public_api, unrelated_type_equality_checks, avoid_web_libraries_in_flutter
 
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_web_auth/flutter_web_auth.dart';
 import 'package:forms_app/accesstoken.dart';
 import 'package:forms_app/listforms.dart';
@@ -11,6 +12,7 @@ import 'package:forms_app/listusers.dart';
 import 'package:forms_app/userforms.dart';
 // import 'package:forms_app/loaddata.dart';
 import 'package:http/http.dart' as http;
+import 'dart:js' as js;
 
 class MainMenu extends StatefulWidget {
   final String? role;
@@ -169,6 +171,23 @@ class _MainMenuState extends State<MainMenu> {
                       );
                     },
                     child: Text('ADMINISTRAR PROFESIONES'),
+                  ),                  
+                  Visibility(
+                    visible: role != 'USUARIO',
+                    child: Column(
+                      children: [
+                        SizedBox(height: 20),
+                        ElevatedButton(
+                          onPressed: () {
+                            js.context.callMethod('open', [
+                              "https://app.powerbi.com/view?r=eyJrIjoiMzBiZGZjMGYtMjJlMy00NDhiLThlODUtNmE3Mzk3NjA1MWM2IiwidCI6IjJlZDU1NzRjLWY5YmEtNDQyNi05NjU4LWU0NzdhZDc0MzlkYiIsImMiOjR9",
+                              '_blank', // This opens the link in a new tab or window
+                            ]);
+                          },
+                          child: Text('CONSULTAS POWER BI'),
+                        ),
+                      ],
+                    ),
                   ),
                 ],
               ),

@@ -207,6 +207,7 @@ class _ListFormsScreenState extends State<ListFormsScreen> {
             TextButton(
               child: Text('ENCUESTA PARA GERENTES'),
               onPressed: () {
+                Navigator.of(context).pop();
                 Navigator.push(
                   context,
                   MaterialPageRoute(builder: (context) => AddEditForm(tipo: 'G', reloadList: _reloadList,)), // Navigate to the NewUserPage
@@ -216,6 +217,7 @@ class _ListFormsScreenState extends State<ListFormsScreen> {
             TextButton(
               child: Text('ENCUESTA PARA USUARIOS'),
               onPressed: () {
+                Navigator.of(context).pop();
                 Navigator.push(
                   context,
                   MaterialPageRoute(builder: (context) => AddEditForm(tipo: 'U', reloadList: _reloadList,)), // Navigate to the NewUserPage
@@ -225,6 +227,7 @@ class _ListFormsScreenState extends State<ListFormsScreen> {
             TextButton(
               child: Text('ENCUESTA PARA TODOS'),
               onPressed: () {
+                Navigator.of(context).pop();
                 Navigator.push(
                   context,
                   MaterialPageRoute(builder: (context) => AddEditForm(tipo: 'T', reloadList: _reloadList,)), // Navigate to the NewUserPage

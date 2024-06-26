@@ -2,6 +2,7 @@
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:forms_app/services/firebase_services.dart';
 import 'package:forms_app/widgets/forms_widgets.dart';
 
@@ -202,7 +203,11 @@ class _AddEditFormState extends State<AddEditForm> {
                       width: 600,
                       child: TextFormField(
                         controller: daysController,
-                        readOnly: false,
+                        readOnly: false,                        
+                        keyboardType: TextInputType.number,
+                        inputFormatters: <TextInputFormatter>[
+                          FilteringTextInputFormatter.digitsOnly
+                        ],
                         decoration: InputDecoration(
                           labelText: 'DÍAS HÁBILES',
                           border: OutlineInputBorder(),
@@ -392,6 +397,7 @@ class _AddEditFormState extends State<AddEditForm> {
         endDateController.text.isEmpty ||
         daysController.text.isEmpty ||
         hoursController.text.isEmpty ||
+        hoursController.text == '0' ||
         selectedStatus.isEmpty) {
       return false;
     }
