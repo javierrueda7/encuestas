@@ -421,21 +421,27 @@ class _AddEditUserState extends State<AddEditUser> {
         await userCredential.user!.sendEmailVerification();
 
         // Step 5: Add user to "Usuarios" subcollection in "Encuestas" with "ACTIVA" status
-        QuerySnapshot encuestasSnapshot = await FirebaseFirestore.instance
-            .collection('Encuestas')
-            .where('status', isEqualTo: 'ACTIVA')
-            .get();
-
-        for (var encuestaDoc in encuestasSnapshot.docs) {
-          await FirebaseFirestore.instance
+  
+        if(selectedRole == 'USUARIO'){
+          QuerySnapshot encuestasSnapshot = await FirebaseFirestore.instance
               .collection('Encuestas')
-              .doc(encuestaDoc.id)
-              .collection('Usuarios')
-              .doc(userCredential.user!.uid)
-              .set({
-            'status': 'ABIERTA',
-          });
+              .where('status', isNotEqualTo: 'CERRADA')
+              .where('tipo', whereIn: selectedPositionId == 'CG0007' ? ['G', 'T'] :  ['U', 'T'])
+              .get();
+
+
+          for (var encuestaDoc in encuestasSnapshot.docs) {
+            await FirebaseFirestore.instance
+                .collection('Encuestas')
+                .doc(encuestaDoc.id)
+                .collection('Usuarios')
+                .doc(userCredential.user!.uid)
+                .set({
+              'status': 'ABIERTA',
+            });
+          }
         }
+        
 
         // Show success message
         // ignore: use_build_context_synchronously

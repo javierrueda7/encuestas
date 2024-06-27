@@ -44,6 +44,7 @@ class _AddEditFormState extends State<AddEditForm> {
   bool activarEncuesta = false;
   String selectedStatus = 'CREADA';
   List<String> selectedUsers = [];
+  List<bool> preloadedSelection = [];
   TextEditingController hoursController = TextEditingController();
   List<String> statuses = ['CREADA', 'ACTIVA', 'CERRADA'];
   late QuerySnapshot activeUsersSnapshot;
@@ -142,13 +143,17 @@ class _AddEditFormState extends State<AddEditForm> {
         }).toList();
 
         userSelection = List<bool>.filled(activeUsers.length, false);
+        preloadedSelection = List<bool>.filled(activeUsers.length, false); // Initialize preloadedSelection
 
         if (widget.id != null) {
           _loadSelectedUsers(widget.id!);
+          if (preloadedSelection.length == activeUsers.length){
+            selectAll = true;
+          }
         } else {
           userSelection = List<bool>.filled(activeUsers.length, false);
         }
-      });
+    });
     } catch (e) {
       print('Error loading active users: $e');
       // Handle the error, e.g., show a Snackbar or an alert
@@ -168,8 +173,22 @@ class _AddEditFormState extends State<AddEditForm> {
         if (selectedUsersIds.contains(activeUsersSnapshot.docs[i].id)) {
           userSelection[i] = true;
           selectedUsers.add(activeUsersSnapshot.docs[i].id);
+          preloadedSelection[i] = true; // Mark this item as preloaded selected
+        } else {
+          preloadedSelection[i] = false;
         }
       }
+    });
+    if (preloadedSelection.where((element) => element).length == activeUsers.length) {
+      selectAll = true;
+    } else {
+      selectAll = false;
+    }
+  }
+
+  void _updateSelectAll() {
+    setState(() {
+      selectAll = userSelection.every((element) => element);
     });
   }
 
@@ -303,31 +322,32 @@ class _AddEditFormState extends State<AddEditForm> {
               Divider(),
               Padding(
                 padding: const EdgeInsets.fromLTRB(20, 0, 20, 0),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    Text('SELECCIONAR TODOS'),
-                    Checkbox(
-                    value: selectAll,
-                    onChanged: (bool? value) {
-                      setState(() {
-                        selectAll = value ?? false;
-                        userSelection = List<bool>.filled(activeUsers.length, selectAll);
-                        selectedUsers.clear(); // Clear the selected users list
-                        if (selectAll) {
-                          // If "Select All" is checked, add all user IDs to the list
-                          selectedUsers.addAll(activeUsers
-                            .where((user) => user.containsKey('userId') && user['userId'] != null)
-                            .map((user) => user['userId']!));
-                          // Also add all emails to the list
-                          print(activeUsers);
-                          print(selectedUsers);
-                        }
-                      });
-                    },
+                child: Visibility(
+                  visible: selectedStatus == 'CREADA',
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      Text('SELECCIONAR TODOS'),
+                      Checkbox(
+                      value: selectAll,
+                      onChanged: (bool? value) {
+                        setState(() {
+                          selectAll = value ?? false;
+                          userSelection = List<bool>.filled(activeUsers.length, selectAll);
+                          selectedUsers.clear(); // Clear the selected users list
+                          if (selectAll) {
+                            // If "Select All" is checked, add all user IDs to the list
+                            selectedUsers.addAll(activeUsers
+                              .where((user) => user.containsKey('userId') && user['userId'] != null)
+                              .map((user) => user['userId']!));
+                            // Also add all emails to the list
+                            print(activeUsers);
+                            print(selectedUsers);
+                          }
+                        });
+                      }),
+                    ],
                   ),
-
-                  ],
                 ),
               ),
               Divider(),
@@ -354,17 +374,20 @@ class _AddEditFormState extends State<AddEditForm> {
                               Expanded(
                                 flex: 1,
                                 child: Checkbox(
-                                  value: userSelection[index],
-                                  onChanged: (bool? selected) {
-                                    setState(() {
-                                      userSelection[index] = selected!;
-                                      if (selected) {
-                                        selectedUsers.add(userId);
-                                      } else {
-                                        selectedUsers.remove(userId);
-                                      }
-                                    });
-                                  },
+                                    value: userSelection[index],
+                                    onChanged: (selectedStatus == 'CERRADA' || (preloadedSelection[index] && selectedStatus != 'CREADA')) 
+                                        ? null // Disable the checkbox if status is 'CERRADA' or if it was preloaded selected
+                                        : (bool? selected) {
+                                            setState(() {
+                                                userSelection[index] = selected!;
+                                                if (selected) {
+                                                    selectedUsers.add(userId);
+                                                } else {
+                                                    selectedUsers.remove(userId);
+                                                }
+                                              _updateSelectAll();
+                                            });
+                                        },
                                 ),
                               ),
                             ],
@@ -382,7 +405,7 @@ class _AddEditFormState extends State<AddEditForm> {
                 onPressed: () {
                   _saveOrEditSurvey();
                 },
-                child: Text(activarEncuesta ? 'ABRIR ENCUESTA' : 'GUARDAR ENCUESTA'),
+                child: Text(activarEncuesta ? (selectedStatus == 'CERRADA' ? 'CERRAR ENCUESTA': 'ABRIR ENCUESTA') : 'GUARDAR ENCUESTA'),
               ),
             ],
           ),
