@@ -142,26 +142,26 @@ class _MainMenuState extends State<MainMenu> {
                     child: Text('ADMINISTRAR CARGOS'),
                   ),
 
-                  // ElevatedButton(
-                  //   onPressed: () async {
-                  //     try {
-                  //       final accessToken = await getAccessToken();
-                  //       await sendZohoEmail(
-                  //         accessToken: 
-                  //         accessToken,
-                  //         fromEmail: 
-                  //         'javieruedase@zohomail.com',
-                  //         toEmail: 'javieruedase@gmail.com',
-                  //         subject: 'Prueba de correo',
-                  //         content: 'contenido',
+                  ElevatedButton(
+                    onPressed: () async {
+                      try {
+                        final accessToken = await getAccessToken();
+                        await sendZohoEmail(
+                          accessToken: 
+                          accessToken,
+                          fromEmail: 
+                          'javieruedase@zohomail.com',
+                          toEmail: 'javieruedase@gmail.com',
+                          subject: 'Prueba de correo',
+                          content: 'contenido',
                           
-                  //       );
-                  //     } catch (e) {
-                  //       print('Error: $e');
-                  //     }
-                  //   },
-                  //   child: Text('Enviar correo'),
-                  // ),
+                        );
+                      } catch (e) {
+                        print('Error: $e');
+                      }
+                    },
+                    child: Text('Enviar correo'),
+                  ),
                   SizedBox(height: 20),
                   ElevatedButton(
                     onPressed: () {
@@ -200,8 +200,8 @@ class _MainMenuState extends State<MainMenu> {
 
 
 
-  static const String clientId = '1000.5PEMG7QZ6VXGK5G7AA1SW7D9FSWB0M';
-  static const String clientSecret = '445c7746248907f802643979e42a7067f5b0a56226';
+  static const String clientId = '1000.LJ685O4V2A3WG4C5KVHJL1HC12J54S';
+  static const String clientSecret = 'b9bc37b1794fb1ade28605387d665fa7a515199685';
   static const String scope = 'ZohoMail.messages.CREATE';
   static const String redirectUri = 'https://cyma-encuestasmop.github.io/EncuestasMOP/';
   static const String callbackUrlScheme = 'cyma';
