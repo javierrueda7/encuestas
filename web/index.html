@@ -1,47 +1,44 @@
 <!DOCTYPE html>
 <html>
 <head>
+  <!-- Required meta tags and links -->
   <meta charset="UTF-8">
   <meta content="IE=Edge" http-equiv="X-UA-Compatible">
   <meta name="description" content="A new Flutter project.">
-
-  <!-- iOS meta tags & icons -->
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black">
   <meta name="apple-mobile-web-app-title" content="forms_app">
   <link rel="apple-touch-icon" href="icons/Icon-192.png">
-
-  <!-- Favicon -->
   <link rel="icon" type="image/png" href="favicon.png"/>
-
   <title>forms_app</title>
   <link rel="manifest" href="manifest.json">
+
+  <!-- Flutter web_auth script -->
   <script src="https://cdn.jsdelivr.net/npm/@linusu/flutter-web-auth@0.5.0/dist/flutter_web_auth.js"></script>
-  <script>
-    // The value below is injected by flutter build, do not touch.
-    const serviceWorkerVersion = null;
-  </script>
-  <!-- This script adds the flutter initialization JS code -->
-  <script src="flutter.js" defer></script>
-</head>
-<body>
+
   <script>
     window.addEventListener('load', function(ev) {
-        // Download main.dart.js
-        _flutter.loader.loadEntrypoint({
+      _flutter.loader.loadEntrypoint({
         serviceWorker: {
-            serviceWorkerVersion: serviceWorkerVersion,
+          serviceWorkerVersion: null
         }
-        }).then(function(engineInitializer) {
+      }).then(function(engineInitializer) {
         return engineInitializer.initializeEngine();
-        }).then(function(appRunner) {
+      }).then(function(appRunner) {
         return appRunner.runApp();
-        }).then(function() {
-          // Initialize flutter_web_auth after the app is loaded
-          window.flutterWebAuth.init();
-        });
+      }).then(function() {
+        window.flutterWebAuth.init();
+      });
     });
+
+    // Handle OAuth redirect
+    if (window.location.href.includes('code=')) {
+      window.opener.postMessage(window.location.href, '*');
+      window.close();
+    }
   </script>
+</head>
+<body>
   <script src="main.dart.js" type="application/javascript"></script>
 </body>
 </html>

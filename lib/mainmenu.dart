@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_web_auth/flutter_web_auth.dart';
@@ -8,6 +9,8 @@ import 'package:forms_app/listusers.dart';
 import 'package:forms_app/userforms.dart';
 import 'package:http/http.dart' as http;
 import 'dart:html' as html;
+import 'dart:js' as js;
+
 
 class MainMenu extends StatefulWidget {
   final String? role;
@@ -170,43 +173,54 @@ class _MainMenuState extends State<MainMenu> {
   static const String accountId = '855887768';
 
   Future<String> getAccessToken() async {
-    try {
-      const authorizationUrl = 'https://accounts.zoho.com/oauth/v2/auth?scope=$scope&client_id=$clientId&response_type=code&access_type=offline&redirect_uri=$redirectUri';
+  try {
+    const authorizationUrl = 'https://accounts.zoho.com/oauth/v2/auth'
+        '?scope=$scope'
+        '&client_id=$clientId'
+        '&response_type=code'
+        '&access_type=offline'
+        '&redirect_uri=$redirectUri';
 
-      print('Launching authorization URL: $authorizationUrl');
-      final result = await FlutterWebAuth.authenticate(
-        url: authorizationUrl,
-        callbackUrlScheme: callbackUrlScheme,
-      );
+    // Open the URL in a new tab/window
+    js.context.callMethod('open', [authorizationUrl, '_blank']);
 
-      print('Authentication result: $result');
-
-      final code = Uri.parse(result).queryParameters['code'];
-
-      if (code == null) {
-        throw Exception('Authorization code not found in callback.');
+    // Use Completer to handle the asynchronous nature of window.onMessage
+    final completer = Completer<String>();
+    html.window.onMessage.listen((html.MessageEvent event) {
+      if (event.data.toString().contains('code=')) {
+        final authCode = Uri.parse(event.data.toString()).queryParameters['code'];
+        if (authCode != null) {
+          completer.complete(authCode);
+        } else {
+          completer.completeError('Authorization code not found in callback.');
+        }
       }
+    });
 
-      const tokenUrl = 'https://accounts.zoho.com/oauth/v2/token';
-      final response = await http.post(
-        Uri.parse(tokenUrl),
-        body: {
-          'grant_type': 'authorization_code',
-          'client_id': clientId,
-          'client_secret': clientSecret,
-          'redirect_uri': redirectUri,
-          'code': code,
-        },
-      );
+    final code = await completer.future;
 
-      final accessToken = jsonDecode(response.body)['access_token'];
-      print('Access Token: $accessToken');
-      return accessToken;
-    } catch (e) {
-      print('Error in authentication: $e');
-      throw Exception('Failed to authenticate with Zoho: $e');
-    }
+    const tokenUrl = 'https://accounts.zoho.com/oauth/v2/token';
+    final response = await http.post(
+      Uri.parse(tokenUrl),
+      body: {
+        'grant_type': 'authorization_code',
+        'client_id': clientId,
+        'client_secret': clientSecret,
+        'redirect_uri': redirectUri,
+        'code': code,
+      },
+    );
+
+    final accessToken = jsonDecode(response.body)['access_token'];
+    print('Access Token: $accessToken');
+    return accessToken;
+  } catch (e) {
+    print('Error in authentication: $e');
+    throw Exception('Failed to authenticate with Zoho: $e');
   }
+}
+
+
 
   Future<void> sendZohoEmail({
     required String accessToken,
@@ -250,3 +264,4 @@ class _MainMenuState extends State<MainMenu> {
     }
   }
 }
+  
