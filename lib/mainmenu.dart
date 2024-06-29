@@ -1,8 +1,8 @@
+// ignore_for_file: avoid_web_libraries_in_flutter, library_private_types_in_public_api
+
 import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:flutter_web_auth/flutter_web_auth.dart';
-import 'package:forms_app/accesstoken.dart';
 import 'package:forms_app/listforms.dart';
 import 'package:forms_app/listparam.dart';
 import 'package:forms_app/listusers.dart';
@@ -112,23 +112,24 @@ class _MainMenuState extends State<MainMenu> {
                     },
                     child: Text('ADMINISTRAR CARGOS'),
                   ),
-                  ElevatedButton(
-                    onPressed: () async {
-                      try {
-                        final accessToken = await getAccessToken();
-                        await sendZohoEmail(
-                          accessToken: accessToken,
-                          fromEmail: 'javieruedase@zohomail.com',
-                          toEmail: 'javieruedase@gmail.com',
-                          subject: 'Prueba de correo',
-                          content: 'contenido',
-                        );
-                      } catch (e) {
-                        print('Error: $e');
-                      }
-                    },
-                    child: Text('Enviar correo'),
-                  ),
+                  // ElevatedButton(
+                  //   onPressed: () async {
+                  //     sendEmail();
+                      // try {
+                      //   final accessToken = await getAccessToken();
+                      //   await sendZohoEmail(
+                      //     accessToken: accessToken,
+                      //     fromEmail: 'javieruedase@zohomail.com',
+                      //     toEmail: 'javieruedase@gmail.com',
+                      //     subject: 'Prueba de correo',
+                      //     content: 'contenido',
+                      //   );
+                      // } catch (e) {
+                      //   print('Error: $e');
+                      // }
+                  //   },
+                  //   child: Text('Enviar correo'),
+                  // ),
                   SizedBox(height: 20),
                   ElevatedButton(
                     onPressed: () {
@@ -169,7 +170,6 @@ class _MainMenuState extends State<MainMenu> {
   static const String clientSecret = 'b9bc37b1794fb1ade28605387d665fa7a515199685';
   static const String scope = 'ZohoMail.messages.CREATE';
   static const String redirectUri = 'https://cyma-encuestasmop.github.io/EncuestasMOP/';
-  static const String callbackUrlScheme = 'cyma';
   static const String accountId = '855887768';
 
   Future<String> getAccessToken() async {
@@ -263,5 +263,23 @@ class _MainMenuState extends State<MainMenu> {
       print('Error sending email: $e');
     }
   }
+
+  Future<void> sendEmail() async {
+    final url = Uri.parse(
+      'https://v1.nocodeapi.com/javirueda7/zohomail/uQtvnhGfyoZKOpeY/sendEmail?fromAddress=javieruedase@zohomail.com&toAddress=thebucaracrew@gmail.com,javieruedase@gmail.com,javier.rueda7@outlook.com&content=contenido&subject=tema'
+    );
+
+    final headers = {
+      'Content-Type': 'application/json',
+    };
+
+    final response = await http.post(url, headers: headers);
+
+    if (response.statusCode == 200) {
+      print('Success: ${response.body}');
+    } else {
+      print('Failed: ${response.statusCode}');
+    }
+  }
 }
-  
+

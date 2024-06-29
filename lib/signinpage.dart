@@ -30,8 +30,8 @@ class _SignInPageState extends State<SignInPage> {
     setState(() {}); // Empty setState just to trigger rebuild
   }
 
-  final TextEditingController _passwordTextcontroller = TextEditingController(text: '123456');
-  final TextEditingController _emailTextController = TextEditingController(text: 'javieruedase@gmail.com');
+  final TextEditingController _passwordTextcontroller = TextEditingController();
+  final TextEditingController _emailTextController = TextEditingController();
 
   @override
   Widget build(BuildContext context) {

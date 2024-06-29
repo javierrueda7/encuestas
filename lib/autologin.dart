@@ -20,11 +20,6 @@ class _AutoLoginState extends State<AutoLogin> {
     users = await validLogin();
   }
   
-  
-  void _reloadList() {
-    setState(() {}); // Empty setState just to trigger rebuild
-  }
-  
   @override
   void initState() {
     super.initState();

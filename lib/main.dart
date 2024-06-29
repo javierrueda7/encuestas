@@ -1,6 +1,5 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
-import 'package:forms_app/autologin.dart';
 import 'package:forms_app/firebase_options.dart';
 import 'package:forms_app/signinpage.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
