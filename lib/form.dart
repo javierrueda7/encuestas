@@ -482,8 +482,8 @@ class _FormsPageState extends State<FormsPage> {
       }
     }
     setState(() {
-    isLoading = false; // Data is no longer loading
-  });
+      isLoading = false; // Data is no longer loading
+    });
   }
   
   List<Map<String, String>> loadAnswers(String encodedString) {
