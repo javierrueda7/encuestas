@@ -1,4 +1,6 @@
 // ignore: must_be_immutable
+// ignore_for_file: use_build_context_synchronously
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -27,6 +29,7 @@ class AddEditUser extends StatefulWidget {
 }
 
 class _AddEditUserState extends State<AddEditUser> {
+  bool _isLoading = false;
   late TextEditingController idController;
   late TextEditingController nameController;
   late TextEditingController bdayController;
@@ -152,7 +155,7 @@ class _AddEditUserState extends State<AddEditUser> {
   }  
 
 
-  @override
+   @override
   Widget build(BuildContext context) {
     professionController.addListener(() {
       final text = professionController.text.toUpperCase();
@@ -178,197 +181,206 @@ class _AddEditUserState extends State<AddEditUser> {
     print(positionsList);
     return AlertDialog(
       title: Center(child: Text(widget.id != null ? 'EDITAR USUARIO' : 'CREAR USUARIO')),
-      content: SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            SizedBox(height: 10),
-            Row(
+      content: Stack(
+        children: [
+          SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Expanded(
-                  child: buildDropdownField('TIPO DE DOCUMENTO', idTypes, (value) {
-                    setState(() {
-                      selectedIdType = value ?? 'TIPO DE DOCUMENTO'; // Ensure a default value if null
-                    });
-                  }, initialValue: selectedIdType, allowChange: true),
+                SizedBox(height: 10),
+                Row(
+                  children: [
+                    Expanded(
+                      child: buildDropdownField('TIPO DE DOCUMENTO', idTypes, (value) {
+                        setState(() {
+                          selectedIdType = value ?? 'TIPO DE DOCUMENTO'; // Ensure a default value if null
+                        });
+                      }, initialValue: selectedIdType, allowChange: true),
+                    ),
+                    SizedBox(width: 10),
+                    Expanded(child: buildTextField('NÚMERO DE IDENTIFICACIÓN', idController, false)),
+                    SizedBox(width: 10),
+                    Expanded(
+                      child: buildDropdownField('SEDE', sedes, (value) {
+                        setState(() {
+                          selectedSede = value ?? 'SEDE'; // Ensure a default value if null
+                        });
+                      }, initialValue: selectedSede, allowChange: true),
+                    ),
+                  ],
                 ),
-                SizedBox(width: 10),
-                Expanded(child: buildTextField('NÚMERO DE IDENTIFICACIÓN', idController, false)),
-                SizedBox(width: 10),
-                Expanded(
-                  child: buildDropdownField('SEDE', sedes, (value) {
-                    setState(() {
-                      selectedSede = value ?? 'SEDE'; // Ensure a default value if null
-                    });
-                  }, initialValue: selectedSede, allowChange: true),
+                SizedBox(height: 10),
+                buildTextField('NOMBRE', nameController, false),
+                SizedBox(height: 10),
+                Row(
+                  children: [
+                    Expanded(child: buildDateField('FECHA DE NACIMIENTO', bdayController, context)),
+                    SizedBox(width: 10),
+                    Expanded(
+                      child: buildDropdownField(
+                        'GÉNERO', genders, (value) {
+                          setState(() {
+                            selectedGender = value ?? 'GÉNERO';
+                          });
+                        }, initialValue: selectedGender, allowChange: true
+                      ),
+                    ),
+                    Visibility(
+                      visible: !admin,
+                      child: SizedBox(width: 10),
+                    ),
+                    Visibility(
+                      visible: !admin,
+                      child: Expanded(child: PasswordField(
+                        label: 'CONTRASEÑA',
+                        controller: passwordController,
+                      ),)
+                    ),
+                  ],
                 ),
-              ],
-            ),
-            SizedBox(height: 10),
-            buildTextField('NOMBRE', nameController, false),
-            SizedBox(height: 10),
-            Row(
-              children: [
-                Expanded(child: buildDateField('FECHA DE NACIMIENTO', bdayController, context)),
-                SizedBox(width: 10),
-                Expanded(
-                  child: buildDropdownField(
-                    'GÉNERO', genders, (value) {
-                      setState(() {
-                        selectedGender = value ?? 'GÉNERO';
-                      });
-                    }, initialValue: selectedGender, allowChange: true
-                  ),
+                SizedBox(height: 10),
+                Row(
+                  children: [
+                    Expanded(child: buildNumberField('CELULAR', phoneController, false)),
+                    SizedBox(width: 10),
+                    Expanded(child: buildEmailField('EMAIL (TEN PRESENTE QUE SERÁ USADO PARA EL INICIO DE SESIÓN)', emailController, widget.id != null ? true : false)),
+                  ],
                 ),
-                Visibility(
-                  visible: !admin,
-                  child: SizedBox(width: 10),
-                ),
-                Visibility(
-                  visible: !admin,
-                  child: Expanded(child: PasswordField(
-                    label: 'CONTRASEÑA',
-                    controller: passwordController,
-                  ),)
-                ),
-              ],
-            ),
-            SizedBox(height: 10),
-            Row(
-              children: [
-                Expanded(child: buildNumberField('CELULAR', phoneController, false)),
-                SizedBox(width: 10),
-                Expanded(child: buildEmailField('EMAIL (TEN PRESENTE QUE SERÁ USADO PARA EL INICIO DE SESIÓN)', emailController, widget.id != null ? true : false)),
-              ],
-            ),
-            SizedBox(height: 10),
-            Container(
-              constraints: BoxConstraints(maxWidth: 800),                    
-              child: Row(
-                children: [
-                  Expanded(
-                    child: TypeAheadFormField<Parametro>(
-                      textFieldConfiguration: TextFieldConfiguration(
-                        controller: positionController,
-                        decoration: InputDecoration(
-                          labelText: 'CARGO',
-                          border: OutlineInputBorder(),
-                          contentPadding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+                SizedBox(height: 10),
+                Container(
+                  constraints: BoxConstraints(maxWidth: 800),                    
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: TypeAheadFormField<Parametro>(
+                          textFieldConfiguration: TextFieldConfiguration(
+                            controller: positionController,
+                            decoration: InputDecoration(
+                              labelText: 'CARGO',
+                              border: OutlineInputBorder(),
+                              contentPadding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+                            ),
+                          ),
+                          suggestionsCallback: getSugPositions,
+                          itemBuilder: (context, cargo) {
+                            return ListTile(
+                              title: Text(cargo.name),
+                            );
+                          },
+                          onSuggestionSelected: (cargo) {
+                            setState(() {
+                              positionController.text = cargo.name;
+                              selectedPositionId = cargo.id;
+                              print(selectedPositionId);
+                            });
+                          },
+                          autovalidateMode: AutovalidateMode.always,
+                          validator: (position) {
+                            if (position!.isEmpty || !positionsList.any((cargo) => cargo.name == position)) {
+                              return 'SELECCIONE UN CARGO DE LA LISTA';
+                            } else {
+                              return null;
+                            }
+                          },
+                          onSaved: (position) {
+                            setState(() {
+                              // Handle saving the selected cargo id if needed
+                            });
+                          },
+                        ),
+                      ),                  
+                      SizedBox(width: 10),                  
+                      Expanded(
+                        child: TypeAheadFormField<Parametro>(
+                          textFieldConfiguration: TextFieldConfiguration(
+                            controller: professionController,
+                            decoration: InputDecoration(                          
+                              labelText: 'PROFESIÓN',                          
+                              border: OutlineInputBorder(),
+                              contentPadding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),                        
+                            ),
+                          ),
+                          suggestionsCallback: getSugProfessions,
+                          itemBuilder: (context, profesion) {
+                            return ListTile(
+                              title: Text(profesion.name),
+                            );
+                          },
+                          onSuggestionSelected: (profesion) {
+                            setState(() {
+                              professionController.text = profesion.name;
+                              selectedProfessionId = profesion.id;
+                            });
+                          },                   
+                          autovalidateMode: AutovalidateMode.always,
+                          validator: (profession) {
+                            if (profession!.isEmpty || !professionsList.any((profesion) => profesion.name == profession)) {
+                              return 'SELECCIONE UNA PROFESIÓN DE LA LISTA';
+                            } else {
+                              return null;
+                            }
+                          },
+                          onSaved: (profession) {
+                            // Save the ocupacion to Firebase if it's a new value
+                            setState(() {
+                              
+                            });
+                          },
                         ),
                       ),
-                      suggestionsCallback: getSugPositions,
-                      itemBuilder: (context, cargo) {
-                        return ListTile(
-                          title: Text(cargo.name),
-                        );
-                      },
-                      onSuggestionSelected: (cargo) {
-                        setState(() {
-                          positionController.text = cargo.name;
-                          selectedPositionId = cargo.id;
-                          print(selectedPositionId);
-                        });
-                      },
-                      autovalidateMode: AutovalidateMode.always,
-                      validator: (position) {
-                        if (position!.isEmpty || !positionsList.any((cargo) => cargo.name == position)) {
-                          return 'SELECCIONE UN CARGO DE LA LISTA';
-                        } else {
-                          return null;
-                        }
-                      },
-                      onSaved: (position) {
-                        setState(() {
-                          // Handle saving the selected cargo id if needed
-                        });
-                      },
-                    ),
-                  ),                  
-                  SizedBox(width: 10),                  
-                  Expanded(
-                    child: TypeAheadFormField<Parametro>(
-                      textFieldConfiguration: TextFieldConfiguration(
-                        controller: professionController,
-                        decoration: InputDecoration(                          
-                          labelText: 'PROFESIÓN',                          
-                          border: OutlineInputBorder(),
-                          contentPadding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),                        
+                    ],
+                  ),
+                ),
+                SizedBox(height: 10),
+                Visibility(
+                  visible: admin,
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: buildDropdownField(
+                          'ROL', roles, (value) {
+                            setState(() {
+                              selectedRole = value ?? 'ROL';
+                            });
+                          }, initialValue: selectedRole, allowChange: true
                         ),
                       ),
-                      suggestionsCallback: getSugProfessions,
-                      itemBuilder: (context, profesion) {
-                        return ListTile(
-                          title: Text(profesion.name),
-                        );
-                      },
-                      onSuggestionSelected: (profesion) {
-                        setState(() {
-                          professionController.text = profesion.name;
-                          selectedProfessionId = profesion.id;
-                        });
-                      },                   
-                      autovalidateMode: AutovalidateMode.always,
-                      validator: (profession) {
-                        if (profession!.isEmpty || !professionsList.any((profesion) => profesion.name == profession)) {
-                          return 'SELECCIONE UNA PROFESIÓN DE LA LISTA';
-                        } else {
-                          return null;
-                        }
-                      },
-                      onSaved: (profession) {
-                        // Save the ocupacion to Firebase if it's a new value
-                        setState(() {
-                          
-                        });
-                      },
-                    ),
+                      SizedBox(width: 10),
+                      Expanded(
+                        child: buildDropdownField(
+                          'ESTADO', statuses, (value) {
+                            setState(() {
+                              selectedStatus = value!;
+                            });
+                          }, initialValue: selectedStatus, allowChange: true
+                        ),
+                      ),
+                    ],
                   ),
-                ],
-              ),
-            ),
-            SizedBox(height: 10),
-            Visibility(
-              visible: admin,
-              child: Row(
-                children: [
-                  Expanded(
-                    child: buildDropdownField(
-                      'ROL', roles, (value) {
-                        setState(() {
-                          selectedRole = value ?? 'ROL';
-                        });
-                      }, initialValue: selectedRole, allowChange: true
-                    ),
-                  ),
-                  SizedBox(width: 10),
-                  Expanded(
-                    child: buildDropdownField(
-                      'ESTADO', statuses, (value) {
-                        setState(() {
-                          selectedStatus = value!;
-                        });
-                      }, initialValue: selectedStatus, allowChange: true
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            SizedBox(height: 20),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                buildButton('GUARDAR', Colors.green, () {
-                  if (widget.id != null) {
-                    _updateUser(userId);
-                  } else {
-                    _saveUser();
-                  }
-                }),
-                buildButton('CANCELAR', Colors.red, () => Navigator.pop(context)),
+                ),
+                SizedBox(height: 20),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    buildButton('GUARDAR', Colors.green, () {
+                      if (widget.id != null) {
+                        _updateUser(userId);
+                      } else {
+                        _saveUser();
+                      }
+                    }, _isLoading),
+                    buildButton('CANCELAR', Colors.red, () => Navigator.pop(context), _isLoading),
+                  ],
+                ),
               ],
             ),
-          ],
-        ),
+          ),
+          // Show loading indicator when _isLoading is true
+          if (_isLoading)
+            Center(
+              child: CircularProgressIndicator(),
+            ),
+        ],
       ),
     );
   }  
@@ -377,6 +389,11 @@ class _AddEditUserState extends State<AddEditUser> {
     // Validate fields
     if (_validateFields()) {
       try {
+        // Set loading to true
+        setState(() {
+          _isLoading = true;
+        });
+
         // Step 1: Check if email is already in use
         QuerySnapshot querySnapshot = await FirebaseFirestore.instance
             .collection('Usuarios')
@@ -385,7 +402,9 @@ class _AddEditUserState extends State<AddEditUser> {
 
         if (querySnapshot.docs.isNotEmpty) {
           // Email already in use
-          // ignore: use_build_context_synchronously
+          setState(() {
+            _isLoading = false;
+          });
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text('El correo electrónico ya está en uso.'),
@@ -417,76 +436,91 @@ class _AddEditUserState extends State<AddEditUser> {
           'sede': selectedSede.toUpperCase(),
         });
 
-        // Step 4: Send email verification
-        await userCredential.user!.sendEmailVerification();
+        // User saved successfully, set loading to false
+        setState(() {
+          _isLoading = false;
+        });
 
-        // Step 5: Add user to "Usuarios" subcollection in "Encuestas" with "ACTIVA" status
-  
-        if(selectedRole == 'USUARIO'){
-          QuerySnapshot encuestasSnapshot = await FirebaseFirestore.instance
-              .collection('Encuestas')
-              .where('status', isNotEqualTo: 'CERRADA')
-              .where('tipo', whereIn: selectedPositionId == 'CG0007' ? ['G', 'T'] :  ['U', 'T'])
-              .get();
-
-
-          for (var encuestaDoc in encuestasSnapshot.docs) {
-            await FirebaseFirestore.instance
-                .collection('Encuestas')
-                .doc(encuestaDoc.id)
-                .collection('Usuarios')
-                .doc(userCredential.user!.uid)
-                .set({
-              'status': 'ABIERTA',
-            });
-          }
-        }
-        
-
-        // Show success message
-        // ignore: use_build_context_synchronously
+        Navigator.pop(context, 'save');
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Usuario guardado exitosamente. Se ha enviado un correo electrónico para verificar la cuenta.'),
+            content: Text('El usuario ha sido creado con éxito.'),
             duration: Duration(seconds: 4),
           ),
         );
-
-        // Clear fields after saving
-        idController.clear();
-        nameController.clear();
-        bdayController.clear();
-        phoneController.clear();
-        emailController.clear();
-
-        // Trigger reload of user list
-        widget.reloadList();
-
-        // ignore: use_build_context_synchronously
-        Navigator.of(context).pop();
-      } catch (e) {
-        // Handle errors
-        print('Error saving user: $e');
-        // ignore: use_build_context_synchronously
+      } on FirebaseAuthException catch (e) {
+        setState(() {
+          _isLoading = false;
+        });
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error al guardar el usuario. Por favor, inténtelo de nuevo más tarde.'),
+            content: Text('Error al crear el usuario: ${e.message}'),
             duration: Duration(seconds: 4),
           ),
         );
       }
-    } else {
-      // Show error message if fields are incomplete or invalid
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Por favor, complete todos los campos correctamente.'),
-          duration: Duration(seconds: 4),
-        ),
-      );
     }
   }
 
+  void _updateUser(String userId) async {
+    // Validate fields
+    if (_validateFields()) {
+      try {
+        // Set loading to true
+        setState(() {
+          _isLoading = true;
+        });
 
+        await FirebaseFirestore.instance.collection('Usuarios').doc(widget.id).update({
+          'idType': selectedIdType.toUpperCase(),
+        'id': idController.text.toUpperCase(),
+        'name': nameController.text.toUpperCase(),
+        'bday': bdayController.text.toUpperCase(),
+        'gender': selectedGender.toUpperCase(),
+        'phone': phoneController.text.toUpperCase(),
+        'email': emailController.text.toLowerCase(),
+        'position': selectedPositionId?.toUpperCase(),
+        'profession': selectedProfessionId?.toUpperCase(),
+        'role': selectedRole.toUpperCase(),
+        'status': selectedStatus.toUpperCase(),
+        'sede': selectedSede.toUpperCase()
+        });
+
+        // User updated successfully, set loading to false
+        setState(() {
+          _isLoading = false;
+        });
+
+        Navigator.pop(context, 'save');
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('El usuario ha sido actualizado con éxito.'),
+            duration: Duration(seconds: 4),
+          ),
+        );
+      } catch (e) {
+        setState(() {
+          _isLoading = false;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error al actualizar el usuario: $e'),
+            duration: Duration(seconds: 4),
+          ),
+        );
+      }
+    }
+  }
+
+  Widget buildButton(String text, Color color, VoidCallback onPressed, bool isLoading) {
+    return ElevatedButton(
+      onPressed: isLoading ? null : onPressed,
+      style: ElevatedButton.styleFrom(
+        foregroundColor: Colors.white, backgroundColor: color,
+      ),
+      child: Text(text),
+    );
+  }
 
   bool _validateFields() {
     print(idController.text);
@@ -533,86 +567,7 @@ class _AddEditUserState extends State<AddEditUser> {
 
     // All validations passed
     return true;
-  }
-
-
-
-  Future<void> _updateUser(String? uid) async {
-  // Validate fields
-  print(uid);
-  print(selectedIdType);
-  print(selectedGender);
-  print(idController.text);
-  print(nameController.text);
-  print(bdayController.text);
-  print(selectedGender);
-  print(phoneController.text);
-  print(emailController.text);
-  print(selectedPositionId);
-  print(selectedProfessionId);
-  print(selectedRole);
-  print(selectedStatus);
-  if (_validateFields()) {
-    try {
-      // Step 1: Update user data in Firestore
-      await FirebaseFirestore.instance.collection('Usuarios').doc(uid).update({
-        'idType': selectedIdType.toUpperCase(),
-        'id': idController.text.toUpperCase(),
-        'name': nameController.text.toUpperCase(),
-        'bday': bdayController.text.toUpperCase(),
-        'gender': selectedGender.toUpperCase(),
-        'phone': phoneController.text.toUpperCase(),
-        'email': emailController.text.toLowerCase(),
-        'position': selectedPositionId?.toUpperCase(),
-        'profession': selectedProfessionId?.toUpperCase(),
-        'role': selectedRole.toUpperCase(),
-        'status': selectedStatus.toUpperCase(),
-        'sede': selectedSede.toUpperCase()
-      });      
-
-      // Show success message
-      // ignore: use_build_context_synchronously
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Información de usuario actualizada correctamente.'),
-          duration: Duration(seconds: 4),
-        ),
-      );
-
-      // Clear fields after saving
-      idController.clear();
-      nameController.clear();
-      bdayController.clear();
-      phoneController.clear();
-      emailController.clear();
-
-      // Trigger reload of user list
-      widget.reloadList();
-
-      // ignore: use_build_context_synchronously
-      Navigator.of(context).pop();
-    } catch (e) {
-      // Handle errors
-      print('Error updating user: $e');
-      // ignore: use_build_context_synchronously
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Error al actualizar la información del usuario. Por favor, inténtelo de nuevo más tarde.'),
-          duration: Duration(seconds: 4),
-        ),
-      );
-    }
-  } else {
-    // Show error message if fields are incomplete or invalid
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Por favor, complete todos los campos correctamente.'),
-        duration: Duration(seconds: 4),
-      ),
-    );
-  }
-}
-
+  }  
 }
 
 class Parametro {

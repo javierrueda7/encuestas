@@ -44,6 +44,8 @@ class _FormsPageState extends State<FormsPage> {
   List<TextEditingController> activityControllers = [];
   List<TextEditingController> hoursControllers = [];
   late final Future<void> dataFetch;
+  bool isLoading = true; // Loading state
+
 
   // Initialize controllers and data in initState
   @override
@@ -67,6 +69,9 @@ class _FormsPageState extends State<FormsPage> {
       }
     });    
     updateTotalHours();
+    setState(() {
+      isLoading = false; // Data is no longer loading
+    });
   }
 
   @override
@@ -231,7 +236,9 @@ class _FormsPageState extends State<FormsPage> {
       appBar: AppBar(
         title: Center(child: Text('${widget.formName.toUpperCase()} - ${widget.dates}')),
       ),
-      body: Padding(
+      body: isLoading
+        ? Center(child: CircularProgressIndicator()) // Show loading indicator
+        : Padding(
         padding: EdgeInsets.fromLTRB(350, 50, 350, 50),
         child: SingleChildScrollView(
           padding: EdgeInsets.all(16.0),
@@ -318,13 +325,16 @@ class _FormsPageState extends State<FormsPage> {
                     ),
                     SizedBox(height: 10),
                     ElevatedButton(
-                      onPressed: widget.formState == 'ENVIADA' ? null : addProject,
+                      onPressed: isLoading || widget.formState == 'ENVIADA' ? null : addProject,
                       child: Text('AGREGAR ACTIVIDAD'),
                     ),
                     SizedBox(height: 20),
                     ElevatedButton(
                       onPressed: widget.formState == 'ENVIADA' ? null : () async {
-                        bool toReview = false;                
+                        bool toReview = false;
+                        setState(() {
+                          isLoading = true; // Data is no longer loading
+                        });            
                         // First, update the projects list with the latest controller values
                         setState(() {
                           for (int i = 0; i < projects.length; i++) {
@@ -423,9 +433,15 @@ class _FormsPageState extends State<FormsPage> {
                             ),
                           );
                           widget.reloadList();
+                          setState(() {
+                            isLoading = false; // Data is no longer loading
+                          });
                           Navigator.of(context).pop();
                         // ignore: dead_code
                         } else {
+                          setState(() {
+                            isLoading = false; // Data is no longer loading
+                          });
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
                               content: Text('Seleccione únicamente Actividades o Proyectos existentes.'),
@@ -451,6 +467,9 @@ class _FormsPageState extends State<FormsPage> {
   late final _formKey;
 
   void _submitForm() async {
+    setState(() {
+      isLoading = true; // Data is no longer loading
+    });
     const String scriptURL = 'https://script.google.com/macros/s/AKfycbwl1b-qt61HCxZG2QtLYNsqvmAgVQ6NRUmEGbV0SQQaL4Hl6Yh3pwF2WpNkk-EJrAlq/exec';
     for (var project in projects) {
       String queryString = "?idencuesta=${widget.idForm}&idusuario=${widget.uidUser}&proyecto=${project['project']}&actividad=${project['activity']}&horas=${project['hours']}&fecha=${DateTime.now()}";
@@ -462,6 +481,9 @@ class _FormsPageState extends State<FormsPage> {
         print(bodyR);
       }
     }
+    setState(() {
+    isLoading = false; // Data is no longer loading
+  });
   }
   
   List<Map<String, String>> loadAnswers(String encodedString) {

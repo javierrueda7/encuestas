@@ -48,6 +48,7 @@ class _AddEditFormState extends State<AddEditForm> {
   TextEditingController hoursController = TextEditingController();
   List<String> statuses = ['CREADA', 'ACTIVA', 'CERRADA'];
   late QuerySnapshot activeUsersSnapshot;
+  bool isLoading = false;
 
   @override
   void initState() {
@@ -198,221 +199,230 @@ class _AddEditFormState extends State<AddEditForm> {
       appBar: AppBar(
         title: Center(child: Text(widget.id != null ? 'EDITAR ENCUESTA' : 'AGREGAR ENCUESTA')),
       ),
-      body: Padding(
-        padding: EdgeInsets.fromLTRB(350, 50, 350, 50),
-        child: SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              SizedBox(height: 10),
-              buildTextField('NOMBRE', nameController, false),
-              SizedBox(height: 10),
-              Row(
+      body: Stack(
+        children: [
+          Padding(
+            padding: EdgeInsets.fromLTRB(350, 50, 350, 50),
+            child: SingleChildScrollView(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Expanded(child: buildDateField('FECHA DE INICIO', startDateController, context)),
-                  SizedBox(width: 10),
-                  Expanded(child: buildDateField('FECHA DE FINALIZACIÓN', endDateController, context)),
-                ],
-              ),
-              SizedBox(height: 10),
-              Row(
-                children: [
-                  Expanded(
-                    child: SizedBox(
-                      width: 600,
-                      child: TextFormField(
-                        controller: daysController,
-                        readOnly: false,                        
-                        keyboardType: TextInputType.number,
-                        inputFormatters: <TextInputFormatter>[
-                          FilteringTextInputFormatter.digitsOnly
-                        ],
-                        decoration: InputDecoration(
-                          labelText: 'DÍAS HÁBILES',
-                          border: OutlineInputBorder(),
-                          contentPadding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+                  SizedBox(height: 10),
+                  buildTextField('NOMBRE', nameController, false),
+                  SizedBox(height: 10),
+                  Row(
+                    children: [
+                      Expanded(child: buildDateField('FECHA DE INICIO', startDateController, context)),
+                      SizedBox(width: 10),
+                      Expanded(child: buildDateField('FECHA DE FINALIZACIÓN', endDateController, context)),
+                    ],
+                  ),
+                  SizedBox(height: 10),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: SizedBox(
+                          width: 600,
+                          child: TextFormField(
+                            controller: daysController,
+                            readOnly: false,
+                            keyboardType: TextInputType.number,
+                            inputFormatters: <TextInputFormatter>[
+                              FilteringTextInputFormatter.digitsOnly
+                            ],
+                            decoration: InputDecoration(
+                              labelText: 'DÍAS HÁBILES',
+                              border: OutlineInputBorder(),
+                              contentPadding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+                            ),
+                            onChanged: (value) {
+                              int horas = int.parse(value) * 9;
+                              hoursController.text = horas.toString();
+                            },
+                          ),
                         ),
-                        onChanged: (value) {
-                          int horas = int.parse(value) * 9;
-                          hoursController.text = horas.toString();
+                      ),
+                      SizedBox(width: 10),
+                      Expanded(
+                        child: buildTextField('HORAS ESPERADAS', hoursController, true),
+                      ),
+                      SizedBox(width: 10),
+                      Expanded(
+                        child: buildDropdownField(
+                          'ESTADO',
+                          statuses,
+                          (value) {
+                            setState(() {
+                              selectedStatus = value ?? 'CREADA';
+                            });
+                          },
+                          initialValue: selectedStatus, allowChange: widget.id == null || widget.status == 'CREADA' ? false : true
+                        ),
+                      ),
+                      Expanded(
+                        child: Row(
+                          children: [
+                            Checkbox(
+                              value: activarEncuesta,
+                              onChanged: widget.status == 'CREADA' || widget.status == null ? (bool? value) {
+                                setState(() {
+                                  activarEncuesta = value ?? false;
+                                });
+                              } : null,
+                            ),
+                            Text('ACTIVAR ENCUESTA'),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: 20),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 0, 20, 0),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Expanded(
+                          flex: 4,
+                          child: Text(
+                            'NOMBRE',
+                            style: TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                        ),
+                        Expanded(
+                          flex: 4,
+                          child: Text(
+                            'PROFESIÓN',
+                            style: TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                        ),
+                        Expanded(
+                          flex: 4,
+                          child: Text(
+                            'CARGO',
+                            style: TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                        ),
+                        Expanded(
+                          flex: 4,
+                          child: Text(
+                            'SEDE',
+                            style: TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                        ),
+                        Expanded(
+                          flex: 1,
+                          child: Text(
+                            'ESTADO',
+                            style: TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                        ),
+                        Expanded(flex: 1, child: SizedBox())
+                      ],
+                    ),
+                  ),
+                  SizedBox(height: 10),
+                  Divider(),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 0, 20, 0),
+                    child: Visibility(
+                      visible: selectedStatus == 'CREADA',
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
+                          Text('SELECCIONAR TODOS'),
+                          Checkbox(
+                          value: selectAll,
+                          onChanged: (bool? value) {
+                            setState(() {
+                              selectAll = value ?? false;
+                              userSelection = List<bool>.filled(activeUsers.length, selectAll);
+                              selectedUsers.clear(); // Clear the selected users list
+                              if (selectAll) {
+                                // If "Select All" is checked, add all user IDs to the list
+                                selectedUsers.addAll(activeUsers
+                                  .where((user) => user.containsKey('userId') && user['userId'] != null)
+                                  .map((user) => user['userId']!));
+                                // Also add all emails to the list
+                                print(activeUsers);
+                                print(selectedUsers);
+                              }
+                            });
+                          }),
+                        ],
+                      ),
+                    ),
+                  ),
+                  Divider(),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 0, 20, 0),
+                    child: SizedBox(
+                      height: 400,
+                      child: ListView.builder(
+                        shrinkWrap: true,
+                        itemCount: activeUsers.length,
+                        itemBuilder: (context, index) {
+                          var user = activeUsers[index];
+                          var userId = activeUsersSnapshot.docs[index].id;                
+                          return Column(
+                            children: [
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Expanded(flex: 4, child: Text(user['name'] ?? '')),
+                                  Expanded(flex: 4, child: Text(user['professionName'])),
+                                  Expanded(flex: 4, child: Text(user['positionName'])),
+                                  Expanded(flex: 4, child: Text(user['sede'] ?? '')),
+                                  Expanded(flex: 1, child: Text(user['status'] ?? 'NO ASIGNADA')),
+                                  Expanded(
+                                    flex: 1,
+                                    child: Checkbox(
+                                        value: userSelection[index],
+                                        onChanged: selectedStatus == 'CERRADA' || (preloadedSelection[index] && selectedStatus != 'CREADA') 
+                                            ? null // Disable the checkbox if status is 'CERRADA' or if it was preloaded selected
+                                            : (bool? selected) {
+                                                setState(() {
+                                                    userSelection[index] = selected!;
+                                                    if (selected) {
+                                                        selectedUsers.add(userId);
+                                                    } else {
+                                                        selectedUsers.remove(userId);
+                                                    }
+                                                  _updateSelectAll();
+                                                });
+                                            },
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              Divider()
+                            ],
+                          );
                         },
                       ),
                     ),
                   ),
-                  SizedBox(width: 10),
-                  Expanded(
-                    child: buildTextField('HORAS ESPERADAS', hoursController, true),
-                  ),
-                  SizedBox(width: 10),
-                  Expanded(
-                    child: buildDropdownField(
-                      'ESTADO',
-                      statuses,
-                      (value) {
-                        setState(() {
-                          selectedStatus = value ?? 'CREADA';
-                        });
-                      },
-                      initialValue: selectedStatus, allowChange: widget.id == null || widget.status == 'CREADA' ? false : true
-                    ),
-                  ),
-                  Expanded(
-                    child: Row(
-                      children: [                                                
-                        Checkbox(
-                          value: activarEncuesta,
-                          onChanged: widget.status == 'CREADA' || widget.status == null ? (bool? value) {
-                            setState(() {
-                              activarEncuesta = value ?? false;
-                            });
-                          } : null,
-                        ),
-                        Text('ACTIVAR ENCUESTA'),
-                      ],
-                    ),
+                  SizedBox(height: 30),
+                  SizedBox(height: 10),
+                  ElevatedButton(
+                    onPressed: isLoading ? null : () {
+                      _saveOrEditSurvey();
+                    },
+                    child: Text(activarEncuesta ? (selectedStatus == 'CERRADA' ? 'CERRAR ENCUESTA': 'ABRIR ENCUESTA') : 'GUARDAR ENCUESTA'),
                   ),
                 ],
               ),
-              SizedBox(height: 20),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(20, 0, 20, 0),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Expanded(
-                      flex: 4,
-                      child: Text(
-                        'NOMBRE',
-                        style: TextStyle(fontWeight: FontWeight.bold),
-                      ),
-                    ),
-                    Expanded(
-                      flex: 4,
-                      child: Text(
-                        'PROFESIÓN',
-                        style: TextStyle(fontWeight: FontWeight.bold),
-                      ),
-                    ),
-                    Expanded(
-                      flex: 4,
-                      child: Text(
-                        'CARGO',
-                        style: TextStyle(fontWeight: FontWeight.bold),
-                      ),
-                    ),
-                    Expanded(
-                      flex: 4,
-                      child: Text(
-                        'SEDE',
-                        style: TextStyle(fontWeight: FontWeight.bold),
-                      ),
-                    ),
-                    Expanded(
-                      flex: 1,
-                      child: Text(
-                        'ESTADO',
-                        style: TextStyle(fontWeight: FontWeight.bold),
-                      ),
-                    ),
-                    Expanded(flex: 1, child: SizedBox())
-                  ],
-                ),
-              ),
-              SizedBox(height: 10),
-              Divider(),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(20, 0, 20, 0),
-                child: Visibility(
-                  visible: selectedStatus == 'CREADA',
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: [
-                      Text('SELECCIONAR TODOS'),
-                      Checkbox(
-                      value: selectAll,
-                      onChanged: (bool? value) {
-                        setState(() {
-                          selectAll = value ?? false;
-                          userSelection = List<bool>.filled(activeUsers.length, selectAll);
-                          selectedUsers.clear(); // Clear the selected users list
-                          if (selectAll) {
-                            // If "Select All" is checked, add all user IDs to the list
-                            selectedUsers.addAll(activeUsers
-                              .where((user) => user.containsKey('userId') && user['userId'] != null)
-                              .map((user) => user['userId']!));
-                            // Also add all emails to the list
-                            print(activeUsers);
-                            print(selectedUsers);
-                          }
-                        });
-                      }),
-                    ],
-                  ),
-                ),
-              ),
-              Divider(),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(20, 0, 20, 0),
-                child: SizedBox(
-                  height: 400,
-                  child: ListView.builder(
-                    shrinkWrap: true,
-                    itemCount: activeUsers.length,
-                    itemBuilder: (context, index) {
-                      var user = activeUsers[index];
-                      var userId = activeUsersSnapshot.docs[index].id;                
-                      return Column(
-                        children: [
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Expanded(flex: 4, child: Text(user['name'] ?? '')),
-                              Expanded(flex: 4, child: Text(user['professionName'])),
-                              Expanded(flex: 4, child: Text(user['positionName'])),
-                              Expanded(flex: 4, child: Text(user['sede'] ?? '')),
-                              Expanded(flex: 1, child: Text(user['status'] ?? 'NO ASIGNADA')),
-                              Expanded(
-                                flex: 1,
-                                child: Checkbox(
-                                    value: userSelection[index],
-                                    onChanged: (selectedStatus == 'CERRADA' || (preloadedSelection[index] && selectedStatus != 'CREADA')) 
-                                        ? null // Disable the checkbox if status is 'CERRADA' or if it was preloaded selected
-                                        : (bool? selected) {
-                                            setState(() {
-                                                userSelection[index] = selected!;
-                                                if (selected) {
-                                                    selectedUsers.add(userId);
-                                                } else {
-                                                    selectedUsers.remove(userId);
-                                                }
-                                              _updateSelectAll();
-                                            });
-                                        },
-                                ),
-                              ),
-                            ],
-                          ),
-                          Divider()
-                        ],
-                      );
-                    },
-                  ),
-                ),
-              ),
-              SizedBox(height: 30),
-              SizedBox(height: 10),
-              ElevatedButton(
-                onPressed: () {
-                  _saveOrEditSurvey();
-                },
-                child: Text(activarEncuesta ? (selectedStatus == 'CERRADA' ? 'CERRAR ENCUESTA': 'ABRIR ENCUESTA') : 'GUARDAR ENCUESTA'),
-              ),
-            ],
+            ),
           ),
-        ),
+          if (isLoading) 
+            Center(
+              child: CircularProgressIndicator(),
+            ),
+        ],
       ),
     );
   }
+
 
   bool _validateForm() {
     if (nameController.text.isEmpty ||
@@ -435,29 +445,43 @@ class _AddEditFormState extends State<AddEditForm> {
       return;
     }
 
-    if (widget.id != null) {
-      await _updateSurvey();
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('¡ENCUESTA ACTUALIZADA EXITOSAMENTE!')),
-      );
-    } else {
-      // Check if any users are selected
-      if (selectedUsers.isEmpty) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('POR FAVOR, SELECCIONE AL MENOS UN USUARIO')),
-        );
-        return;
-      }
-      
-      await _addSurvey();
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('¡ENCUESTA CREADA EXITOSAMENTE!')),
-      );
-    }
+    setState(() {
+      isLoading = true; // Set loading state to true
+    });
 
-    widget.reloadList();
-    Navigator.pop(context);
+    try {
+      if (widget.id != null) {
+        await _updateSurvey();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('¡ENCUESTA ACTUALIZADA EXITOSAMENTE!')),
+        );
+      } else {
+        if (selectedUsers.isEmpty) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('POR FAVOR, SELECCIONE AL MENOS UN USUARIO')),
+          );
+          return;
+        }
+
+        await _addSurvey();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('¡ENCUESTA CREADA EXITOSAMENTE!')),
+        );
+      }
+
+      widget.reloadList();
+      Navigator.pop(context);
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('ERROR: $e')),
+      );
+    } finally {
+      setState(() {
+        isLoading = false; // Set loading state to false
+      });
+    }
   }
+
 
 
   Future<void> _addSurvey() async {

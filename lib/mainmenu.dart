@@ -142,26 +142,26 @@ class _MainMenuState extends State<MainMenu> {
                     child: Text('ADMINISTRAR CARGOS'),
                   ),
 
-                  // ElevatedButton(
-                  //   onPressed: () async {
-                  //     try {
-                  //       final accessToken = await getAccessToken();
-                  //       await sendZohoEmail(
-                  //         accessToken: 
-                  //         accessToken,
-                  //         fromEmail: 
-                  //         'javieruedase@zohomail.com',
-                  //         toEmail: 'javieruedase@gmail.com',
-                  //         subject: 'Prueba de correo',
-                  //         content: 'contenido',
+                  ElevatedButton(
+                    onPressed: () async {
+                      try {
+                        final accessToken = await getAccessToken();
+                        await sendZohoEmail(
+                          accessToken: 
+                          accessToken,
+                          fromEmail: 
+                          'javieruedase@zohomail.com',
+                          toEmail: 'javieruedase@gmail.com',
+                          subject: 'Prueba de correo',
+                          content: 'contenido',
                           
-                  //       );
-                  //     } catch (e) {
-                  //       print('Error: $e');
-                  //     }
-                  //   },
-                  //   child: Text('Enviar correo'),
-                  // ),
+                        );
+                      } catch (e) {
+                        print('Error: $e');
+                      }
+                    },
+                    child: Text('Enviar correo'),
+                  ),
                   SizedBox(height: 20),
                   ElevatedButton(
                     onPressed: () {

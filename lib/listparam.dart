@@ -1,3 +1,5 @@
+// ignore_for_file: use_build_context_synchronously
+
 import 'package:flutter/material.dart';
 import 'package:forms_app/services/firebase_services.dart';
 import 'package:forms_app/widgets/forms_widgets.dart';
@@ -128,6 +130,7 @@ class _AddEditParamState extends State<AddEditParam> {
   late TextEditingController nameController;
   late String selectedEstado;
   late bool isEditing; // Indicates whether it's an edit operation
+  bool isLoading = false; // Loading state
 
   @override
   void initState() {
@@ -167,16 +170,22 @@ class _AddEditParamState extends State<AddEditParam> {
         ),
       ),
       actions: [
-        TextButton(
-          onPressed: () {
-            if (isEditing) {
-              _updateParameter(context);
-            } else {
-              _saveParameter(context);
-            }
-          },
-          child: Text(isEditing ? 'GUARDAR' : 'AGREGAR'),
-        ),
+        isLoading
+            ? Center(child: CircularProgressIndicator()) // Show loading indicator
+            : TextButton(
+                onPressed: () {
+                  if (isLoading) return; // Prevent further actions if loading
+                  setState(() {
+                    isLoading = true; // Set loading state to true
+                  });
+                  if (isEditing) {
+                    _updateParameter(context);
+                  } else {
+                    _saveParameter(context);
+                  }
+                },
+                child: Text(isEditing ? 'GUARDAR' : 'AGREGAR'),
+              ),
         TextButton(
           onPressed: () {
             Navigator.of(context).pop();
@@ -187,59 +196,73 @@ class _AddEditParamState extends State<AddEditParam> {
     );
   }
 
-  void _saveParameter(BuildContext context) {
+  void _saveParameter(BuildContext context) async {
     String nombre = nameController.text;
     String estado = selectedEstado;
     String param = widget.param;
-
-    // Save the parameter in the database
-    // Implement your logic to save the parameter here
-
-    saveParameter(param, nombre, estado);
-
-    // Show a success message
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Parámetro guardado exitosamente.'),
-        duration: Duration(seconds: 4),
-      ),
-    );
-
-    // Clear the name field after saving
-    nameController.clear();
-
-    // Trigger a refresh of the list by calling setState
-    widget.reloadList();
-
-    Navigator.of(context).pop();
+    try {
+      await saveParameter(param, nombre, estado);
+      // Show a success message
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Parámetro guardado exitosamente.'),
+          duration: Duration(seconds: 4),
+        ),
+      );
+      // Clear the name field after saving
+      nameController.clear();
+      // Trigger a refresh of the list by calling setState
+      widget.reloadList();
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error al guardar el parámetro: $e'),
+          duration: Duration(seconds: 4),
+        ),
+      );
+    } finally {
+      Navigator.of(context).pop();
+      setState(() {
+        isLoading = false; // Reset loading state
+      });
+    }
   }
 
-  void _updateParameter(BuildContext context) {
+  void _updateParameter(BuildContext context) async {
     String id = widget.id ?? '';
     String nombre = nameController.text;
     String estado = selectedEstado;
     String param = widget.param;
 
-    // Update the parameter in the database
-    // Implement your logic to update the parameter here
+    try {
+      updateParameter(id, param, nombre, estado);
 
-    updateParameter(id, param, nombre, estado);
+      // Show a success message
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Parámetro actualizado exitosamente.'),
+          duration: Duration(seconds: 4),
+        ),
+      );
 
-    // Show a success message
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Parámetro actualizado exitosamente.'),
-        duration: Duration(seconds: 4),
-      ),
-    );
+      // Clear the name field after saving
+      nameController.clear();
 
-    // Clear the name field after saving
-    nameController.clear();
-
-    // Trigger a refresh of the list by calling setState
-    widget.reloadList();
-
-    Navigator.of(context).pop();
-  }  
+      // Trigger a refresh of the list by calling setState
+      widget.reloadList();
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error al actualizar el parámetro: $e'),
+          duration: Duration(seconds: 4),
+        ),
+      );
+    } finally {
+      Navigator.of(context).pop();
+      setState(() {
+        isLoading = false; // Reset loading state
+      });
+    }
+  }
 }
 
