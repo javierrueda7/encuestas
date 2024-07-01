@@ -311,7 +311,7 @@ class _ListFormsScreenState extends State<ListFormsScreen> {
 
 
 
-  Future<void> sendEmail(String id, String nameEncuesta) async {
+  Future<void> sendEmail(String id, String nameEncuesta, String body) async {
     // Obtener los IDs de los usuarios seleccionados de la subcolección 'Usuarios' dentro de 'Encuestas'
     var selectedUsersSnapshot = await FirebaseFirestore.instance
         .collection('Encuestas')
@@ -342,26 +342,15 @@ class _ListFormsScreenState extends State<ListFormsScreen> {
 
     // selectedEmails ahora contiene todos los emails de los usuarios seleccionados.
     print(selectedEmails);  // Para verificar la lista de correos electrónicos.
-    manualSendEmail(selectedEmails, nameEncuesta);
+    manualSendEmail(selectedEmails, nameEncuesta, body);
   }
 
-  Future<void> manualSendEmail(List<String> recipients, String nameEncuesta) async {
-    String subject = "Invitación a resolver la encuesta $nameEncuesta";
+  Future<void> manualSendEmail(List<String> recipients, String nameEncuesta, String body) async {
+    String subject = "Invitación a diligenciar la encuesta $nameEncuesta";
     final String recipientsString = recipients.join(',');
-    const String body = '''
-      Hola, el área técnica de CyMA te invita a responder la última encuesta, copia y pega el siguiente link en tu navegador para visitar la plataforma de Encuestas MOP.
-
-      https://javierrueda7.github.io/CYMA-EncuestasMOP/
-
-      Si ya fue respondida, hacer caso omiso a este correo.
-
-      Cordial saludo,
-
-      Equipo CyMA - Encuestas MOP          
-    ''';
 
     final url = Uri.parse(
-      'https://v1.nocodeapi.com/javirueda7/zohomail/uQtvnhGfyoZKOpeY/sendEmail?fromAddress=javieruedase@zohomail.com&toAddress=$recipientsString&content=$body&subject=$subject'
+      'https://v1.nocodeapi.com/javirueda7/zohomail/RKInPbDvfYIbiDiM/sendEmail?fromAddress=javieruedase@zohomail.com&toAddress=$recipientsString&content=$body&subject=$subject&mailFormat=html'
     );
 
     final headers = {
@@ -380,12 +369,41 @@ class _ListFormsScreenState extends State<ListFormsScreen> {
 
 
   void confirmacionEmail(BuildContext context, String id, String nameEncuesta) {
+    TextEditingController emailBodyController = TextEditingController(text: '''
+      Hola, el área técnica de CyMA te invita a responder la última encuesta, presiona en el siguiente link para visitar la plataforma de Encuestas MOP.
+      
+      https://cyma-encuestasmop.github.io/EncuestasMOP/
+      
+      Si ya fue respondida, hacer caso omiso a este correo.
+
+      Cordial saludo,
+      Equipo CyMA - Encuestas MOP
+    ''');
+
     showDialog(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
           title: Text('CONFIRMACIÓN'),
-          content: Text('¿ESTÁS SEGURO QUE DESEAS ENVIAR LA INVITACIÓN A RESPONDER $nameEncuesta?'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              Text('¿ESTÁS SEGURO QUE DESEAS ENVIAR LA INVITACIÓN A RESPONDER $nameEncuesta?'),
+              SizedBox(height: 20),
+              SizedBox(
+                width: 800,
+                child: TextField(
+                  controller: emailBodyController,
+                  decoration: InputDecoration(
+                    labelText: 'Cuerpo del correo',
+                    hintText: 'Escribe tu mensaje aquí',
+                    border: OutlineInputBorder(),
+                  ),
+                  maxLines: 20,
+                ),
+              ),
+            ],
+          ),
           actions: <Widget>[
             TextButton(
               child: Text('CANCELAR'),
@@ -396,19 +414,9 @@ class _ListFormsScreenState extends State<ListFormsScreen> {
             TextButton(
               child: Text('ENVIAR INVITACIONES'),
               onPressed: () async {
+                String emailBody = generateSimpleHtmlBody(emailBodyController.text);                
                 Navigator.of(context).pop(); // Cierra el diálogo
-                await sendEmail(id, nameEncuesta); // Llama a la función de eliminación
-                // try {
-                //   final accessToken = await getAccessToken();
-                //   await sendZohoEmail(
-                //     accessToken,
-                //     'javieruedase@gmail.com',
-                //     'Test Subject',
-                //     'Hello, this is a test email from Flutter!',
-                //   );
-                // } catch (e) {
-                //   print('Error: $e');
-                // }
+                await sendEmail(id, nameEncuesta, emailBody); // Llama a la función de envío de correo
               },
             ),
           ],
@@ -416,6 +424,20 @@ class _ListFormsScreenState extends State<ListFormsScreen> {
       },
     );
   }
+
+  String generateSimpleHtmlBody(String body) {
+    // Reemplaza los saltos de línea con etiquetas <br>
+    String htmlBody = body.replaceAll('\n', '<br>');
+    
+    return '''
+    <html>
+      <body>
+        <p>$htmlBody</p>
+      </body>
+    </html>
+    ''';
+  }
+
 
   Future<void> _loadAndShowUsers(BuildContext context, String id) async {
     // Mostrar un círculo de carga mientras se obtienen los datos
