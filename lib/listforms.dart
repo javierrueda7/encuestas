@@ -1,8 +1,6 @@
 
 // ignore_for_file: use_build_context_synchronously
 
-import 'dart:convert';
-import 'package:forms_app/accesstoken.dart';
 import 'package:http/http.dart' as http;
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
@@ -286,29 +284,6 @@ class _ListFormsScreenState extends State<ListFormsScreen> {
       }
     }
   }
-
-  Future<void> sendZohoEmail(String accessToken, String toEmail, String subject, String content) async {
-    final url = Uri.parse('https://mail.zoho.com/api/accounts/$accountId/messages');
-    final headers = {
-      'Authorization': 'Zoho-oauthtoken $accessToken',
-      'Content-Type': 'application/json'
-    };
-    final body = jsonEncode({
-      'fromAddress': 'javieruedase@zohomail.com', // Reemplaza con tu dirección de correo electrónico
-      'toAddress': toEmail,
-      'subject': subject,
-      'content': content
-    });
-
-    final response = await http.post(url, headers: headers, body: body);
-
-    if (response.statusCode == 200) {
-      print('¡Correo electrónico enviado correctamente!');
-    } else {
-      print('Error al enviar el correo electrónico: ${response.body}');
-    }
-  }
-
 
 
   Future<void> sendEmail(String id, String nameEncuesta, String body) async {
