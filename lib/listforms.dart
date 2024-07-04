@@ -325,7 +325,7 @@ class _ListFormsScreenState extends State<ListFormsScreen> {
     final String recipientsString = recipients.join(',');
 
     final url = Uri.parse(
-      'https://v1.nocodeapi.com/javirueda7/zohomail/RKInPbDvfYIbiDiM/sendEmail?fromAddress=javieruedase@zohomail.com&toAddress=$recipientsString&content=$body&subject=$subject&mailFormat=html'
+      'https://v1.nocodeapi.com/javirueda7/zohomail/PrBQEYwVPmgtekXW/sendEmail?fromAddress=auxiliar.pmo@cyma.com.co&toAddress=$recipientsString&content=$body&subject=$subject&mailFormat=html'
     );
 
     final headers = {
