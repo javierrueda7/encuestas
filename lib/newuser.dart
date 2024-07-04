@@ -435,7 +435,36 @@ class _AddEditUserState extends State<AddEditUser> {
           'status': selectedStatus.toUpperCase(),
           'sede': selectedSede.toUpperCase(),
         });
+        late QuerySnapshot encuestasSnapshot;
 
+        if(selectedRole == 'USUARIO'){
+          if(selectedPositionId == 'CG0007'){
+            encuestasSnapshot = await FirebaseFirestore.instance
+              .collection('Encuestas')
+              .where('status', isEqualTo: 'ACTIVA')
+              .where('tipo', whereIn: ['G', 'T'])
+              .get();
+          } else {
+            encuestasSnapshot = await FirebaseFirestore.instance
+              .collection('Encuestas')
+              .where('status', isEqualTo: 'ACTIVA')
+              .where('tipo', whereIn: ['U', 'T'])
+              .get();
+          }
+          // Step 5: Add user to "Usuarios" subcollection in "Encuestas" with "ACTIVA" status      
+
+          for (var encuestaDoc in encuestasSnapshot.docs) {
+            await FirebaseFirestore.instance
+                .collection('Encuestas')
+                .doc(encuestaDoc.id)
+                .collection('Usuarios')
+                .doc(userCredential.user!.uid)
+                .set({
+              'status': 'ABIERTA',
+            });
+          }
+        }        
+        widget.reloadList();
         // User saved successfully, set loading to false
         setState(() {
           _isLoading = false;
@@ -490,6 +519,8 @@ class _AddEditUserState extends State<AddEditUser> {
         setState(() {
           _isLoading = false;
         });
+        
+        widget.reloadList();
 
         Navigator.pop(context, 'save');
         ScaffoldMessenger.of(context).showSnackBar(
