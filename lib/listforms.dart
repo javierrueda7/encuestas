@@ -1,6 +1,7 @@
 
 // ignore_for_file: use_build_context_synchronously
 
+import 'package:forms_app/form.dart';
 import 'package:http/http.dart' as http;
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
@@ -111,7 +112,9 @@ class _ListFormsScreenState extends State<ListFormsScreen> {
                                     SizedBox(width: 8),
                                     IconButton(
                                       onPressed: () {
-                                        _loadAndShowUsers(context, item?['id']);
+                                        String dates = item?['data']['startDate'] + ' - ' + item?['data']['endDate'];
+                                        String hours = ((int.parse(item?['data']['days']))*9).toString();
+                                        _loadAndShowUsers(context, item?['id'], item?['data']['name'] ?? '', dates, hours, item?['data']['status']);
                                       },
                                       icon: Icon(Icons.remove_red_eye_outlined, color: Colors.blue),
                                     ),
@@ -414,7 +417,7 @@ class _ListFormsScreenState extends State<ListFormsScreen> {
   }
 
 
-  Future<void> _loadAndShowUsers(BuildContext context, String id) async {
+  Future<void> _loadAndShowUsers(BuildContext context, String id, String titulo, String dates, String hours, String status) async {
     // Mostrar un círculo de carga mientras se obtienen los datos
     showDialog(
       context: context,
@@ -427,54 +430,108 @@ class _ListFormsScreenState extends State<ListFormsScreen> {
     );
 
     try {
-      // Obtener los documentos de la subcolección 'Usuarios' dentro de 'Encuestas'
       var selectedUsersSnapshot = await FirebaseFirestore.instance
           .collection('Encuestas')
           .doc(id)
           .collection('Usuarios')
           .get();
 
-      // Filtrar los IDs basados en status != 'ENVIADA'
-      var selectedUsersIds = selectedUsersSnapshot.docs
-          .where((doc) => doc.data()['status'] != 'ENVIADA')
-          .map((doc) => doc.id)
-          .toList();
+      List<User> users = [];
 
-      List<String> userNames = [];
+      // Obtener los nombres de la colección principal 'Usuarios' usando los IDs
+      for (var doc in selectedUsersSnapshot.docs) {
+        var userId = doc.id;
+        var userStatus = doc.data()['status'];
+        var userAnswer = doc.data()['answer'];
+        var userDate = doc.data()['date'];
 
-      // Obtener los nombres de la colección principal 'Usuarios' usando los IDs filtrados
-      for (var userId in selectedUsersIds) {
         var userDoc = await FirebaseFirestore.instance
             .collection('Usuarios')
             .doc(userId)
             .get();
 
         var userData = userDoc.data();
-        if (userDoc.exists && userData != null && userData.containsKey('name')) {
-          userNames.add(userData['name']);
+        if (userDoc.exists && userData != null) {
+          users.add(User(id: userId, status: userStatus, data: userData, answer: userAnswer, date: userDate));
         }
       }
-      userNames.sort((b, a) => b.compareTo(a));
+
+      // Ordenar por status con el orden: ABIERTA - GUARDADA - ENVIADA y luego por name
+      users.sort((a, b) {
+        // Definir el orden de los estados
+        const statusOrder = {
+          'ABIERTA': 0,
+          'GUARDADA': 1,
+          'ENVIADA': 2,
+        };
+
+        // Comparar primero por status usando el orden definido
+        int statusComparison = statusOrder[a.status]!.compareTo(statusOrder[b.status]!);
+        if (statusComparison != 0) {
+          return statusComparison;
+        }
+
+        // Si los estados son iguales, comparar por name
+        return a.data['name'].compareTo(b.data['name']);
+      });
+
+
 
       // Cerrar el círculo de carga
       Navigator.of(context).pop();
 
-      // Mostrar el diálogo con la lista de nombres
+      // Mostrar el diálogo con la lista de nombres y estados
       showDialog(
         context: context,
         builder: (BuildContext context) {
           return AlertDialog(
             alignment: Alignment.center,
             actionsAlignment: MainAxisAlignment.center,
-            title: Text('USUARIOS POR RESPONDER'),
+            title: Text('USUARIOS POR RESPONDER - $titulo'),
             content: SizedBox(
               width: double.maxFinite,
               child: ListView.builder(
                 shrinkWrap: true,
-                itemCount: userNames.length,
+                itemCount: users.length,
                 itemBuilder: (BuildContext context, int index) {
                   return ListTile(
-                    title: Text(userNames[index]),
+                    leading: Text(users[index].status),
+                    title: Text(users[index].data['name']),
+                    subtitle: Text(users[index].id), // Display the user ID
+                    trailing: IconButton(
+                      onPressed: () {
+                        print(id);
+                        print(titulo);
+                        print(dates);
+                        print(users[index].id);
+                        print(hours);
+                        print(users[index].answer);
+                        print((users[index].date as Timestamp).toDate());
+                        if (users[index].status != 'ABIERTA') {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => FormsPage(
+                                idForm: id, // Accessing the document ID
+                                formName: titulo,
+                                dates: dates,
+                                uidUser: users[index].id,
+                                hours: hours,
+                                formState: 'ENVIADA',
+                                answers: users[index].answer,
+                                date: (users[index].date as Timestamp).toDate(),
+                                reloadList: _reloadList,
+                              ),
+                            ), // Navigate to the NewUserPage
+                          );
+                        } else {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text('El usuario no ha inicilizado esta encuesta'))
+                          );
+                        }
+                      },
+                      icon: Icon(Icons.remove_red_eye_outlined, color: Colors.blueAccent)
+                    )
                   );
                 },
               ),
@@ -490,7 +547,6 @@ class _ListFormsScreenState extends State<ListFormsScreen> {
           );
         },
       );
-
     } catch (e) {
       // Manejar errores aquí si es necesario
       print('Error: $e');
@@ -499,4 +555,17 @@ class _ListFormsScreenState extends State<ListFormsScreen> {
     }
   }
 
+
+}
+
+
+
+class User {
+  final String id;
+  final String status;
+  final Map<String, dynamic> data;
+  final dynamic answer;
+  final dynamic date;
+
+  User({required this.id, required this.status, required this.data, required this.answer, required this.date});
 }

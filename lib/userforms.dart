@@ -1,3 +1,5 @@
+// ignore_for_file: use_build_context_synchronously
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:forms_app/form.dart';
@@ -83,8 +85,9 @@ class _ListUserFormsState extends State<ListUserForms> {
                                   ],
                                 ) : Text(item?['data']['status'], style: TextStyle(fontSize: 14),),
                                 SizedBox(width: 8,),
-                                IconButton(onPressed: () {
-                                  if(item?['data']['status'] == 'ACTIVA'){
+                                IconButton(onPressed: () async {
+                                  String? status = await getStatus(item?['id'], uid);
+                                  if(status == 'ACTIVA'){
                                     Navigator.push(
                                       context,
                                       MaterialPageRoute(builder: (context) => FormsPage(
@@ -127,6 +130,32 @@ class _ListUserFormsState extends State<ListUserForms> {
       ),
     );
   }
+
+  Future<String?> getStatus(String itemId, String uid) async {
+    try {
+      // Fetch the document snapshot from Firebase
+      var documentSnapshot = await FirebaseFirestore.instance
+          .collection('Encuesta')
+          .doc(itemId)
+          .collection('Usuarios')
+          .doc(uid)
+          .get();
+
+      if (documentSnapshot.exists) {
+        // Extract the data and retrieve the 'status'
+        var data = documentSnapshot.data();
+        return data?['status'];
+      } else {
+        // Handle the case where the document does not exist
+        return null; // or handle as appropriate
+      }
+    } catch (e) {
+      // Handle any errors that occur during data retrieval
+      print('Error retrieving status: $e');
+      return null; // or handle as appropriate
+    }
+  }
+
 }
 
 

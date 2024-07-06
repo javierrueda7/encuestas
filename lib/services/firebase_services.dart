@@ -196,6 +196,43 @@ Future<List<Map<String, dynamic>>> getEncuestas() async {
   return formsList;
 }
 
+Future<Map<String, dynamic>?> getEncuestaWithUsers(String encuestaId) async {
+  // Reference to the specific "Encuesta" document
+  final DocumentReference encuestaDocRef = db.collection('Encuestas').doc(encuestaId);
+
+  // Get the "Encuesta" document
+  DocumentSnapshot encuestaDoc = await encuestaDocRef.get();
+
+  // Check if the "Encuesta" document exists and its status is not 'ELIMINADA' or 'CREADA'
+  if (encuestaDoc.exists) {
+    var encuestaData = encuestaDoc.data() as Map<String, dynamic>?;
+    if (encuestaData != null && encuestaData['status'] != 'ELIMINADA' && encuestaData['status'] != 'CREADA') {
+      // Reference to the "Usuarios" subcollection within the current "Encuesta" document
+      final CollectionReference usuariosCollection = encuestaDocRef.collection('Usuarios');
+
+      // Query the "Usuarios" subcollection
+      QuerySnapshot usuariosSnapshot = await usuariosCollection.get();
+
+      // Convert the documents to a list of maps
+      List<Map<String, dynamic>> usuariosList = usuariosSnapshot.docs.map((doc) => doc.data() as Map<String, dynamic>).toList();
+
+      // Sort the list of users alphabetically by the 'name' field
+      usuariosList.sort((a, b) => (a['name'] as String).compareTo(b['name'] as String));
+
+      // Create a map for the "Encuesta" document with the sorted users list
+      Map<String, dynamic> encuesta = {
+        'id': encuestaDoc.id,
+        'data': encuestaData,
+        'users': usuariosList,
+      };
+
+      return encuesta;
+    }
+  }
+
+  // Return null if no matching document is found or the conditions are not met
+  return null;
+}
 
 Future<List<Map<String, dynamic>>> getEncuestasUser(String searchString) async {
   List<Map<String, dynamic>> formsList = [];
