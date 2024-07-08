@@ -26,8 +26,17 @@ class _ListUserFormsState extends State<ListUserForms> {
     super.initState();
   }
 
-  void _reloadList() {
-    setState(() {}); // Empty setState just to trigger rebuild
+  bool isLoading = false;
+
+  void _reloadList() async {
+    setState(() {
+      isLoading = true;
+    });
+    await Future.delayed(Duration(seconds: 3));
+    // Add your reload list logic here
+    setState(() {
+      isLoading = false;
+    });
   }
 
   @override
@@ -36,7 +45,9 @@ class _ListUserFormsState extends State<ListUserForms> {
       appBar: AppBar(
         title: Center(child: Text('ENCUESTAS')),
       ),
-      body: Padding(
+      body: isLoading? Center(
+              child: CircularProgressIndicator(),
+            ) : Padding(
         padding: EdgeInsets.fromLTRB(350, 50, 350, 50),
         child: Column(
           children: [
@@ -87,7 +98,11 @@ class _ListUserFormsState extends State<ListUserForms> {
                                 SizedBox(width: 8,),
                                 IconButton(onPressed: () async {
                                   String? status = await getStatus(item?['id'], uid);
-                                  if(status == 'ACTIVA'){
+                                  print(status);
+                                  if (status != item?['user']['status']) {
+                                    _reloadList();
+                                  }
+                                  if(item?['data']['status'] == 'ACTIVA'){
                                     Navigator.push(
                                       context,
                                       MaterialPageRoute(builder: (context) => FormsPage(
@@ -102,10 +117,10 @@ class _ListUserFormsState extends State<ListUserForms> {
                                         reloadList: _reloadList,
                                       )), // Navigate to the NewUserPage
                                     );
-                                  } else if(item?['user']['status'] == 'ENVIADA'){
+                                  } else {
                                     ScaffoldMessenger.of(context).showSnackBar(
                                       SnackBar(
-                                        content: Text('La encuesta ya ha sido respondida.'),
+                                        content: Text('La encuesta ya ha sido cerrada.'),
                                         duration: Duration(seconds: 4),
                                       ),
                                     );
@@ -135,7 +150,7 @@ class _ListUserFormsState extends State<ListUserForms> {
     try {
       // Fetch the document snapshot from Firebase
       var documentSnapshot = await FirebaseFirestore.instance
-          .collection('Encuesta')
+          .collection('Encuestas')
           .doc(itemId)
           .collection('Usuarios')
           .doc(uid)
