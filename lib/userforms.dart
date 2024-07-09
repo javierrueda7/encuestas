@@ -30,12 +30,6 @@ class _ListUserFormsState extends State<ListUserForms> {
 
   void _reloadList() async {
     setState(() {
-      isLoading = true;
-    });
-    await Future.delayed(Duration(seconds: 3));
-    // Add your reload list logic here
-    setState(() {
-      isLoading = false;
     });
   }
 
@@ -45,9 +39,7 @@ class _ListUserFormsState extends State<ListUserForms> {
       appBar: AppBar(
         title: Center(child: Text('ENCUESTAS')),
       ),
-      body: isLoading? Center(
-              child: CircularProgressIndicator(),
-            ) : Padding(
+      body: Padding(
         padding: EdgeInsets.fromLTRB(350, 50, 350, 50),
         child: Column(
           children: [

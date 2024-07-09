@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_typeahead/flutter_typeahead.dart';
 import 'package:forms_app/services/firebase_services.dart';
+import 'package:forms_app/widgets/forms_widgets.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert' as convert;
 
@@ -95,6 +96,12 @@ class _FormsPageState extends State<FormsPage> {
       controller.dispose();
     }
     super.dispose();
+  }
+
+  void _reloadList() async {    
+    await initPro().whenComplete(() async => await initAct()).whenComplete((() => setState(() {
+      
+    })));
   }
 
   Future<void> retrieveDataAndInit() async {
@@ -229,6 +236,7 @@ class _FormsPageState extends State<FormsPage> {
       totalHours = newTotal;
     });
   }
+  bool pressed = false;
 
   @override
   Widget build(BuildContext context) {    
@@ -326,15 +334,47 @@ class _FormsPageState extends State<FormsPage> {
                     SizedBox(height: 10),
                     ElevatedButton(
                       onPressed: isLoading || widget.formState == 'ENVIADA' ? null : addProject,
-                      child: Text('AGREGAR ACTIVIDAD'),
+                      child: Text('AGREGAR ELEMENTO'),
+                    ),
+                    SizedBox(height: 20),
+                    Visibility(
+                      visible: widget.formState != 'ENVIADA',
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Expanded(
+                            child: ElevatedButton(onPressed: (){showDialog(
+                                context: context,
+                                builder: (BuildContext context) {
+                                  return AddParam(param: 'Proyectos', reloadList: _reloadList);
+                                },
+                              );},
+                              child: Text('AGREGAR NUEVO PROYECTO')
+                            ),
+                          ),
+                          SizedBox(width: 20),
+                          Expanded(
+                            child: ElevatedButton(onPressed: (){showDialog(
+                                context: context,
+                                builder: (BuildContext context) {
+                                  return AddParam(param: 'Actividades', reloadList: _reloadList);
+                                },
+                              );},
+                              child: Text('AGREGAR NUEVA ACTIVIDAD')
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                     SizedBox(height: 20),
                     ElevatedButton(
-                      onPressed: widget.formState == 'ENVIADA' ? null : () async {
+                      onPressed: widget.formState == 'ENVIADA' || pressed ? null : () async {
                         bool toReview = false;
                         setState(() {
+                          pressed = true;
                           isLoading = true; // Data is no longer loading
-                        });            
+                        });
+
                         // First, update the projects list with the latest controller values
                         setState(() {
                           for (int i = 0; i < projects.length; i++) {
@@ -343,14 +383,19 @@ class _FormsPageState extends State<FormsPage> {
                             projects[i]['hours'] = hoursControllers[i].text;
                           }
                         });
-                        if(projects.isEmpty && enviarEncuesta){
+
+                        if (projects.isEmpty && enviarEncuesta) {
                           ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text('Por favor, agregue al menos una actividad.'),
-                                duration: Duration(seconds: 4),
-                              ),
-                            );
-                            return;
+                            SnackBar(
+                              content: Text('Por favor, agregue al menos una actividad.'),
+                              duration: Duration(seconds: 4),
+                            ),
+                          );
+                          setState(() {
+                            isLoading = false;
+                            pressed = false;
+                          });
+                          return;
                         }
 
                         for (var controller in activityControllers) {
@@ -361,9 +406,13 @@ class _FormsPageState extends State<FormsPage> {
                                 duration: Duration(seconds: 4),
                               ),
                             );
-                            return; // Prevent form submission if any hoursController is empty
+                            setState(() {
+                              isLoading = false;
+                              pressed = false;
+                            });
+                            return; // Prevent form submission if any activityController is empty
                           }
-                        }     
+                        }
 
                         for (var controller in projectControllers) {
                           if (controller.text.isEmpty) {
@@ -373,9 +422,13 @@ class _FormsPageState extends State<FormsPage> {
                                 duration: Duration(seconds: 4),
                               ),
                             );
-                            return; // Prevent form submission if any hoursController is empty
+                            setState(() {
+                              isLoading = false;
+                              pressed = false;
+                            });
+                            return; // Prevent form submission if any projectController is empty
                           }
-                        }     
+                        }
 
                         // Check if any hoursController is empty
                         for (var controller in hoursControllers) {
@@ -386,40 +439,46 @@ class _FormsPageState extends State<FormsPage> {
                                 duration: Duration(seconds: 4),
                               ),
                             );
+                            setState(() {
+                              isLoading = false;
+                              pressed = false;
+                            });
                             return; // Prevent form submission if any hoursController is empty
                           }
-                        }                
+                        }
+
                         // Then, handle new projects and activities
                         for (var project in projects) {
                           if (!projectsList.any((p) => p.name == project['projectName'])) {
-                            //Pendientes de revision admin
-                            String newProjectId = await saveParameter('Proyectos', project['projectName'], 'PENDIENTE');
-                            project['project'] = newProjectId;
-                            //toReview = true;
+                            // Check if project was already created in this session
+                            toReview = true;
                           } else {
                             project['project'] = projectsList.firstWhere((p) => p.name == project['projectName']).id;
-                          }                
+                          }
+
                           if (!activitiesList.any((a) => a.name == project['activityName'])) {
-                            //Pendientes de revision admin
-                            String newActivityId = await saveParameter('Actividades', project['activityName'], 'PENDIENTE');
-                            project['activity'] = newActivityId;
-                            //toReview = true;
+                            // Check if activity was already created in this session
+                            toReview = true;
                           } else {
                             project['activity'] = activitiesList.firstWhere((a) => a.name == project['activityName']).id;
                           }
-                        }                
+                        }
+
                         // Print all elements of the projects list with updated IDs
                         for (var project in projects) {
                           print("?idencuesta=${widget.idForm}&idusuario=${widget.uidUser}&proyecto=${project['project']}&actividad=${project['activity']}&horas=${project['hours']}&fecha=${DateTime.now()}");
-                        }                
+                        }
+
                         if (!toReview) {
-                          List<String> projectStrings = [];                
+                          List<String> projectStrings = [];
+
                           for (var project in projects) {
                             projectStrings.add("?idencuesta=${widget.idForm}&idusuario=${widget.uidUser}&proyecto=${project['project']}&actividad=${project['activity']}&horas=${project['hours']}&fecha=${DateTime.now()}");
-                          }                
+                          }
+
                           String resultString = projectStrings.join(';');
                           print(resultString);
-                          if(enviarEncuesta) _submitForm();
+                          if (enviarEncuesta) _submitForm();
                           FirebaseFirestore.instance.collection('Encuestas').doc(widget.idForm).collection('Usuarios').doc(widget.uidUser).update({
                             'answer': resultString,
                             'status': enviarEncuesta ? 'ENVIADA' : 'GUARDADA',
@@ -436,24 +495,28 @@ class _FormsPageState extends State<FormsPage> {
                           setState(() {
                             isLoading = false; // Data is no longer loading
                           });
-                          Navigator.of(context).pop();
-                        // ignore: dead_code
                         } else {
-                          setState(() {
-                            isLoading = false; // Data is no longer loading
-                          });
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
-                              content: Text('Seleccione únicamente Actividades o Proyectos existentes.'),
+                              content: Text('Por favor, cree los proyectos o actividades faltantes.'),
                               duration: Duration(seconds: 4),
                             ),
                           );
+                          setState(() {
+                            isLoading = false;
+                            pressed = false;
+                          });
                           return;
-                        }      
-                        // Implement additional submit functionality here (e.g., saving to Firestore)
+                        }
+                        widget.reloadList();
+                        setState(() {
+                          isLoading = false; // Data is no longer loading
+                        });
+                        Navigator.of(context).pop();
                       },
                       child: Text(enviarEncuesta ? 'ENVIAR ENCUESTA' : 'GUARDAR ENCUESTA'),
                     ),
+
                   ],
                 );
               }
@@ -606,7 +669,7 @@ class _FormsPageState extends State<FormsPage> {
                   if (proyecto!.isEmpty) {
                     return 'SELECCIONE UN PROYECTO DE LA LISTA';
                   } else if (!projectsList.any((project) => project.name == proyecto)) {
-                    return 'SE CREARÁ UN NUEVO PROYECTO';
+                    return 'DEBE CREAR UN NUEVO PROYECTO';
                   } else {
                     return null;
                   }
@@ -656,7 +719,7 @@ class _FormsPageState extends State<FormsPage> {
                   if (activity!.isEmpty) {
                     return 'SELECCIONE UNA ACTIVIDAD DE LA LISTA';
                   } else if (!activitiesList.any((act) => act.name == activity)) {
-                    return 'SE CREARÁ UNA NUEVA ACTIVIDAD';
+                    return 'DEBE CREAR UNA NUEVA ACTIVIDAD';
                   } else {
                     return null;
                   }
@@ -755,4 +818,99 @@ class Parametro {
   final String id;
   final String name;
   Parametro({required this.id, required this.name});
+}
+
+class AddParam extends StatefulWidget {
+  final String param;
+  final VoidCallback reloadList;
+
+  AddParam({required this.param, required this.reloadList});
+
+  @override
+  // ignore: library_private_types_in_public_api
+  _AddParamState createState() => _AddParamState();
+}
+
+class _AddParamState extends State<AddParam> {
+  late String id;
+  TextEditingController nameController = TextEditingController();
+  String selectedEstado = 'PENDIENTE';
+  bool isLoading = false; // Loading state
+
+  @override
+  void initState() {
+    super.initState();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+
+    return AlertDialog(
+      title: Center(child: Text('AGREGAR ${widget.param.toUpperCase()}')),
+      content: SizedBox(
+        height: 200,
+        child: Padding(
+          padding: EdgeInsets.fromLTRB(300, 30, 300, 30),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              buildTextField('NOMBRE', nameController, false),
+            ],
+          ),
+        ),
+      ),
+      actions: [
+        isLoading
+            ? Center(child: CircularProgressIndicator()) // Show loading indicator
+            : TextButton(
+                onPressed: () {
+                  if (isLoading) return; // Prevent further actions if loading
+                  setState(() {
+                    isLoading = true; // Set loading state to true
+                  });
+                  _saveParameter(context);
+                },
+                child: Text('AGREGAR'),
+              ),
+        TextButton(
+          onPressed: () {
+            Navigator.of(context).pop();
+          },
+          child: Text('CANCELAR'),
+        ),
+      ],
+    );
+  }
+
+  void _saveParameter(BuildContext context) async {
+    String nombre = nameController.text;
+    String estado = selectedEstado;
+    String param = widget.param;
+    try {
+      await saveParameter(param, nombre, estado);
+      // Show a success message
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Parámetro guardado exitosamente.'),
+          duration: Duration(seconds: 4),
+        ),
+      );
+      // Clear the name field after saving
+      nameController.clear();
+      // Trigger a refresh of the list by calling setState
+      widget.reloadList();
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error al guardar el parámetro: $e'),
+          duration: Duration(seconds: 4),
+        ),
+      );
+    } finally {
+      Navigator.of(context).pop();
+      setState(() {
+        isLoading = false; // Reset loading state
+      });
+    }
+  }  
 }
