@@ -517,7 +517,7 @@ class _ListFormsScreenState extends State<ListFormsScreen> {
                                 dates: dates,
                                 uidUser: users[index].id,
                                 hours: hours,
-                                formState: 'ENVIADA',
+                                formState: users[index].status,
                                 answers: users[index].answer,
                                 date: (users[index].date as Timestamp).toDate(),
                                 reloadList: _reloadList,

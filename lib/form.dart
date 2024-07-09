@@ -544,9 +544,6 @@ class _FormsPageState extends State<FormsPage> {
         print(bodyR);
       }
     }
-    setState(() {
-      isLoading = false; // Data is no longer loading
-    });
   }
   
   List<Map<String, String>> loadAnswers(String encodedString) {
