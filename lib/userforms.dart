@@ -110,6 +110,20 @@ class _ListUserFormsState extends State<ListUserForms> {
                                       )), // Navigate to the NewUserPage
                                     );
                                   } else {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(builder: (context) => FormsPage(
+                                        idForm: item?['id'], // Accessing the document ID
+                                        formName: item?['data']['name'],
+                                        dates: item?['data']['startDate'] + ' - ' + item?['data']['endDate'],
+                                        uidUser: uid,
+                                        hours: ((int.parse(item?['data']['days']))*9).toString(),
+                                        formState: 'ENVIADA',
+                                        answers: item?['user']['status'] == 'ABIERTA' ?  'NULL' : item?['user']['answer'],
+                                        date: item?['user']['status'] == 'ABIERTA' ? DateTime.now() : (item?['user']['date'] as Timestamp).toDate(),
+                                        reloadList: _reloadList,
+                                      )), // Navigate to the NewUserPage
+                                    );
                                     ScaffoldMessenger.of(context).showSnackBar(
                                       SnackBar(
                                         content: Text('La encuesta ya ha sido cerrada.'),
