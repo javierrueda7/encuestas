@@ -510,30 +510,38 @@ class _AddEditFormState extends State<AddEditForm> {
 
   Future<void> _updateSurvey() async {
     var surveyDoc = FirebaseFirestore.instance.collection('Encuestas').doc(widget.id);
-    await surveyDoc.update({
-      'name': nameController.text,
-      'startDate': startDateController.text,
-      'endDate': endDateController.text,
-      'days': daysController.text,
-      'status': activarEncuesta == true && widget.status == 'CREADA' ? 'ACTIVA' : selectedStatus,
-      'hours': hoursController.text,
-    });
 
-    var userCollection = surveyDoc.collection('Usuarios');
-    var currentUsers = await userCollection.get();
+    try {
+      // Update the main survey document
+      await surveyDoc.update({
+        'name': nameController.text,
+        'startDate': startDateController.text,
+        'endDate': endDateController.text,
+        'days': daysController.text,
+        'status': activarEncuesta == true && widget.status == 'CREADA' ? 'ACTIVA' : selectedStatus,
+        'hours': hoursController.text,
+      });
 
-    for (var doc in currentUsers.docs) {
-      if (!selectedUsers.contains(doc.id)) {
-        await userCollection.doc(doc.id).delete();
+      var userCollection = surveyDoc.collection('Usuarios');
+      var currentUsers = await userCollection.get();
+
+      // Delete users not in selectedUsers and whose status is not 'ENVIADA'
+      for (var doc in currentUsers.docs) {
+        var docData = doc.data();
+        if (!selectedUsers.contains(doc.id) && docData['status'] != 'ENVIADA') {
+          await userCollection.doc(doc.id).delete();
+        }
       }
-    }
 
-    for (var userId in selectedUsers) {
-      if (!currentUsers.docs.any((doc) => doc.id == userId)) {
-        await userCollection.doc(userId).set({
-          'status': 'ABIERTA',
-        });
+      // Add new users from selectedUsers if they are not already present
+      for (var userId in selectedUsers) {
+        if (!currentUsers.docs.any((doc) => doc.id == userId)) {
+          await userCollection.doc(userId).set({'status': 'ABIERTA'});
+        }
       }
+    } catch (e) {
+      print('Failed to update survey: $e');
     }
   }
+
 }
