@@ -74,6 +74,16 @@ Future<List> validLogin() async {
   return users;
 }
 
+Future<String> getFormState(String formId, String userId) async {  
+  DocumentSnapshot formDoc = await FirebaseFirestore.instance.collection('Encuestas').doc(formId).collection('Usuarios').doc(userId).get();
+
+  if (formDoc.exists) {
+    return formDoc['status'];
+  } else {
+    throw Exception('Documento de encuesta no encontrado');
+  }
+}
+
 Future<String> getUserRole() async {
   // Obtener el usuario autenticado
   User? user = FirebaseAuth.instance.currentUser;

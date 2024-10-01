@@ -1,3 +1,5 @@
+// ignore_for_file: use_build_context_synchronously
+
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:forms_app/mainmenu.dart';
@@ -161,13 +163,13 @@ class _SignInPageState extends State<SignInPage> {
                           );
                         },
                         style: ButtonStyle(
-                          backgroundColor: MaterialStateProperty.resolveWith((states) {
-                            if (states.contains(MaterialState.pressed)) {
+                          backgroundColor: WidgetStateProperty.resolveWith((states) {
+                            if (states.contains(WidgetState.pressed)) {
                               return Colors.amber;
                             }
                             return Colors.amber;
                           }),
-                          shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+                          shape: WidgetStateProperty.all<RoundedRectangleBorder>(
                               RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(30)))),
                         child: Text('CREAR USUARIO', style: TextStyle(

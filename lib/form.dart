@@ -371,40 +371,27 @@ class _FormsPageState extends State<FormsPage> {
                         SizedBox(height: 20),
                         ElevatedButton(
                           onPressed: widget.formState == 'ENVIADA' || pressed ? null : () async {
-                            bool toReview = false;
-                            setState(() {
-                              pressed = true;
-                              isLoading = true; // Data is no longer loading
-                            });
-          
-                            // First, update the projects list with the latest controller values
-                            setState(() {
-                              for (int i = 0; i < projects.length; i++) {
-                                projects[i]['projectName'] = projectControllers[i].text;
-                                projects[i]['activityName'] = activityControllers[i].text;
-                                projects[i]['hours'] = hoursControllers[i].text;
-                              }
-                            });
-          
-                            if (projects.isEmpty && enviarEncuesta) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text('Por favor, agregue al menos una actividad.'),
-                                  duration: Duration(seconds: 4),
-                                ),
-                              );
+                            String currentState = await getFormState(widget.idForm, widget.uidUser);
+                            if (currentState != 'ENVIADA') {
+                              bool toReview = false;
                               setState(() {
-                                isLoading = false;
-                                pressed = false;
+                                pressed = true;
+                                isLoading = true; // Data is no longer loading
                               });
-                              return;
-                            }
-          
-                            for (var controller in activityControllers) {
-                              if (controller.text.isEmpty) {
+            
+                              // First, update the projects list with the latest controller values
+                              setState(() {
+                                for (int i = 0; i < projects.length; i++) {
+                                  projects[i]['projectName'] = projectControllers[i].text;
+                                  projects[i]['activityName'] = activityControllers[i].text;
+                                  projects[i]['hours'] = hoursControllers[i].text;
+                                }
+                              });
+            
+                              if (projects.isEmpty && enviarEncuesta) {
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   SnackBar(
-                                    content: Text('Por favor, complete todos los campos de actividades.'),
+                                    content: Text('Por favor, agregue al menos una actividad.'),
                                     duration: Duration(seconds: 4),
                                   ),
                                 );
@@ -412,121 +399,145 @@ class _FormsPageState extends State<FormsPage> {
                                   isLoading = false;
                                   pressed = false;
                                 });
-                                return; // Prevent form submission if any activityController is empty
+                                return;
                               }
-                            }
-          
-                            for (var controller in projectControllers) {
-                              if (controller.text.isEmpty) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text('Por favor, complete todos los campos de proyectos.'),
-                                    duration: Duration(seconds: 4),
-                                  ),
-                                );
-                                setState(() {
-                                  isLoading = false;
-                                  pressed = false;
-                                });
-                                return; // Prevent form submission if any projectController is empty
-                              }
-                            }
-          
-                            // Check if any hoursController is empty
-                            for (var controller in hoursControllers) {
-                              if (controller.text.isEmpty || controller.text == '0') {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text('Por favor, complete todos los campos de horas.'),
-                                    duration: Duration(seconds: 4),
-                                  ),
-                                );
-                                setState(() {
-                                  isLoading = false;
-                                  pressed = false;
-                                });
-                                return; // Prevent form submission if any hoursController is empty
-                              }
-                            }
-          
-                            // Then, handle new projects and activities
-                            for (var project in projects) {
-                              if (!projectsList.any((p) => p.name == project['projectName'])) {
-                                // Check if project was already created in this session
-                                toReview = true;
-                              } else {
-                                project['project'] = projectsList.firstWhere((p) => p.name == project['projectName']).id;
-                              }
-          
-                              if (!activitiesList.any((a) => a.name == project['activityName'])) {
-                                // Check if activity was already created in this session
-                                toReview = true;
-                              } else {
-                                project['activity'] = activitiesList.firstWhere((a) => a.name == project['activityName']).id;
-                              }
-                            }
-          
-                            // Print all elements of the projects list with updated IDs
-                            for (var project in projects) {
-                              print("?idencuesta=${widget.idForm}&idusuario=${widget.uidUser}&proyecto=${project['project']}&actividad=${project['activity']}&horas=${project['hours']}&fecha=${DateTime.now()}");
-                            }
-          
-                            if (!toReview) {
-                              List<String> projectStrings = [];
-          
-                              for (var project in projects) {
-                                projectStrings.add("?idencuesta=${widget.idForm}&idusuario=${widget.uidUser}&proyecto=${project['project']}&actividad=${project['activity']}&horas=${project['hours']}&fecha=${DateTime.now()}");
-                              }
-          
-                              String resultString = projectStrings.join(';');
-                              print(resultString);
-                              if (enviarEncuesta) {
-                                const String scriptURL = 'https://script.google.com/macros/s/AKfycbwl1b-qt61HCxZG2QtLYNsqvmAgVQ6NRUmEGbV0SQQaL4Hl6Yh3pwF2WpNkk-EJrAlq/exec';
-                                for (var project in projects) {
-                                  String queryString = "?idencuesta=${widget.idForm}&idusuario=${widget.uidUser}&proyecto=${project['project']}&actividad=${project['activity']}&horas=${project['hours']}&fecha=${DateTime.now()}";
-                                  var finalURI = Uri.parse(scriptURL + queryString);
-                                  var response = await http.get(finalURI);
-                                  //print(finalURI);
-                                  if (response.statusCode == 200) {
-                                    var bodyR = convert.jsonDecode(response.body);
-                                    print(bodyR);
-                                  }
+            
+                              for (var controller in activityControllers) {
+                                if (controller.text.isEmpty) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text('Por favor, complete todos los campos de actividades.'),
+                                      duration: Duration(seconds: 4),
+                                    ),
+                                  );
+                                  setState(() {
+                                    isLoading = false;
+                                    pressed = false;
+                                  });
+                                  return; // Prevent form submission if any activityController is empty
                                 }
                               }
-                              FirebaseFirestore.instance.collection('Encuestas').doc(widget.idForm).collection('Usuarios').doc(widget.uidUser).update({
-                                'answer': resultString,
-                                'status': enviarEncuesta ? 'ENVIADA' : 'GUARDADA',
-                                'date': DateTime.now(),
-                                'idencuesta': widget.idForm
-                              });
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text(enviarEncuesta ? 'Encuesta enviada exitosamente.' : 'Encuesta guardada exitosamente.'),
-                                  duration: Duration(seconds: 4),
-                                ),
-                              );
+            
+                              for (var controller in projectControllers) {
+                                if (controller.text.isEmpty) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text('Por favor, complete todos los campos de proyectos.'),
+                                      duration: Duration(seconds: 4),
+                                    ),
+                                  );
+                                  setState(() {
+                                    isLoading = false;
+                                    pressed = false;
+                                  });
+                                  return; // Prevent form submission if any projectController is empty
+                                }
+                              }
+            
+                              // Check if any hoursController is empty
+                              for (var controller in hoursControllers) {
+                                if (controller.text.isEmpty || controller.text == '0') {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text('Por favor, complete todos los campos de horas.'),
+                                      duration: Duration(seconds: 4),
+                                    ),
+                                  );
+                                  setState(() {
+                                    isLoading = false;
+                                    pressed = false;
+                                  });
+                                  return; // Prevent form submission if any hoursController is empty
+                                }
+                              }
+            
+                              // Then, handle new projects and activities
+                              for (var project in projects) {
+                                if (!projectsList.any((p) => p.name == project['projectName'])) {
+                                  // Check if project was already created in this session
+                                  toReview = true;
+                                } else {
+                                  project['project'] = projectsList.firstWhere((p) => p.name == project['projectName']).id;
+                                }
+            
+                                if (!activitiesList.any((a) => a.name == project['activityName'])) {
+                                  // Check if activity was already created in this session
+                                  toReview = true;
+                                } else {
+                                  project['activity'] = activitiesList.firstWhere((a) => a.name == project['activityName']).id;
+                                }
+                              }
+            
+                              // Print all elements of the projects list with updated IDs
+                              for (var project in projects) {
+                                print("?idencuesta=${widget.idForm}&idusuario=${widget.uidUser}&proyecto=${project['project']}&actividad=${project['activity']}&horas=${project['hours']}&fecha=${DateTime.now()}");
+                              }
+            
+                              if (!toReview) {
+                                List<String> projectStrings = [];
+            
+                                for (var project in projects) {
+                                  projectStrings.add("?idencuesta=${widget.idForm}&idusuario=${widget.uidUser}&proyecto=${project['project']}&actividad=${project['activity']}&horas=${project['hours']}&fecha=${DateTime.now()}");
+                                }
+            
+                                String resultString = projectStrings.join(';');
+                                print(resultString);
+                                if (enviarEncuesta) {
+                                  const String scriptURL = 'https://script.google.com/macros/s/AKfycbwl1b-qt61HCxZG2QtLYNsqvmAgVQ6NRUmEGbV0SQQaL4Hl6Yh3pwF2WpNkk-EJrAlq/exec';
+                                  for (var project in projects) {
+                                    String queryString = "?idencuesta=${widget.idForm}&idusuario=${widget.uidUser}&proyecto=${project['project']}&actividad=${project['activity']}&horas=${project['hours']}&fecha=${DateTime.now()}";
+                                    var finalURI = Uri.parse(scriptURL + queryString);
+                                    var response = await http.get(finalURI);
+                                    //print(finalURI);
+                                    if (response.statusCode == 200) {
+                                      var bodyR = convert.jsonDecode(response.body);
+                                      print(bodyR);
+                                    }
+                                  }
+                                }
+                                FirebaseFirestore.instance.collection('Encuestas').doc(widget.idForm).collection('Usuarios').doc(widget.uidUser).update({
+                                  'answer': resultString,
+                                  'status': enviarEncuesta ? 'ENVIADA' : 'GUARDADA',
+                                  'date': DateTime.now(),
+                                  'idencuesta': widget.idForm
+                                });
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text(enviarEncuesta ? 'Encuesta enviada exitosamente.' : 'Encuesta guardada exitosamente.'),
+                                    duration: Duration(seconds: 4),
+                                  ),
+                                );
+                                widget.reloadList();
+                                setState(() {
+                                  isLoading = false; // Data is no longer loading
+                                });
+                              } else {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text('Por favor, cree los proyectos o actividades faltantes.'),
+                                    duration: Duration(seconds: 4),
+                                  ),
+                                );
+                                setState(() {
+                                  isLoading = false;
+                                  pressed = false;
+                                });
+                                return;
+                              }
                               widget.reloadList();
                               setState(() {
                                 isLoading = false; // Data is no longer loading
                               });
+                              Navigator.of(context).pop();
                             } else {
                               ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text('Por favor, cree los proyectos o actividades faltantes.'),
-                                  duration: Duration(seconds: 4),
-                                ),
-                              );
-                              setState(() {
-                                isLoading = false;
-                                pressed = false;
-                              });
-                              return;
+                                  SnackBar(
+                                    content: Text('Esta encuesta ya fue enviada.'),
+                                    duration: Duration(seconds: 4),
+                                  ),
+                                );
+                              setState(() {});
                             }
-                            widget.reloadList();
-                            setState(() {
-                              isLoading = false; // Data is no longer loading
-                            });
-                            Navigator.of(context).pop();
                           },
                           child: Text(enviarEncuesta ? 'ENVIAR ENCUESTA' : 'GUARDAR ENCUESTA'),
                         ),
