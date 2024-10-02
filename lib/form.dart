@@ -373,13 +373,49 @@ class _FormsPageState extends State<FormsPage> {
                           onPressed: widget.formState == 'ENVIADA' || pressed ? null : () async {
                             String currentState = await getFormState(widget.idForm, widget.uidUser);
                             if (currentState != 'ENVIADA') {
+                              
                               bool toReview = false;
+
+                              // Show a confirmation dialog
+                              bool confirmed = await showDialog(
+                                context: context,
+                                builder: (BuildContext context) {
+                                  return AlertDialog(
+                                    title: Text('Confirmación'),
+                                    content: Text('¿Está seguro de que desea ${enviarEncuesta ? 'enviar' : 'guardar'} la encuesta?'),
+                                    actions: [
+                                      TextButton(
+                                        onPressed: () {
+                                          Navigator.of(context).pop(false); // User cancels
+                                        },
+                                        child: Text('Cancelar'),
+                                      ),
+                                      TextButton(
+                                        onPressed: () {
+                                          Navigator.of(context).pop(true); // User confirms
+                                        },
+                                        child: Text('Confirmar'),
+                                      ),
+                                    ],
+                                  );
+                                },
+                              );
+
+                              if (!confirmed) {
+                                // If the user cancels, stop the process
+                                setState(() {
+                                  isLoading = false;
+                                  pressed = false;
+                                });
+                                return;
+                              }
+
                               setState(() {
                                 pressed = true;
-                                isLoading = true; // Data is no longer loading
+                                isLoading = true; // Data is now loading
                               });
-            
-                              // First, update the projects list with the latest controller values
+
+                              // Continue with the rest of your logic to update projects and send the survey...
                               setState(() {
                                 for (int i = 0; i < projects.length; i++) {
                                   projects[i]['projectName'] = projectControllers[i].text;
@@ -387,7 +423,7 @@ class _FormsPageState extends State<FormsPage> {
                                   projects[i]['hours'] = hoursControllers[i].text;
                                 }
                               });
-            
+
                               if (projects.isEmpty && enviarEncuesta) {
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   SnackBar(

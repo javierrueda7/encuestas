@@ -408,7 +408,7 @@ class _AddEditFormState extends State<AddEditForm> {
                     onPressed: isLoading ? null : () {
                       _saveOrEditSurvey();
                     },
-                    child: Text(activarEncuesta ? (selectedStatus == 'CERRADA' ? 'CERRAR ENCUESTA': 'ABRIR ENCUESTA') : 'GUARDAR ENCUESTA'),
+                    child: Text((activarEncuesta && widget.status != 'CREADA') ? (selectedStatus == 'CERRADA' ? (widget.status != selectedStatus ? 'CERRAR ENCUESTA' : 'GUARDAR CAMBIOS ENCUESTA CERRADA') : (widget.status != selectedStatus ? 'ACTIVAR ENCUESTA' : 'GUARDAR CAMBIOS ENCUESTA ACTIVA')) : 'GUARDAR CAMBIOS ENCUESTA'),
                   ),
                 ],
               ),
