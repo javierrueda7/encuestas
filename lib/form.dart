@@ -375,31 +375,34 @@ class _FormsPageState extends State<FormsPage> {
                             if (currentState != 'ENVIADA') {
                               
                               bool toReview = false;
+                              bool confirmed = true; // Default to true if no confirmation is required
 
-                              // Show a confirmation dialog
-                              bool confirmed = await showDialog(
-                                context: context,
-                                builder: (BuildContext context) {
-                                  return AlertDialog(
-                                    title: Text('Confirmación'),
-                                    content: Text('¿Está seguro de que desea ${enviarEncuesta ? 'enviar' : 'guardar'} la encuesta?'),
-                                    actions: [
-                                      TextButton(
-                                        onPressed: () {
-                                          Navigator.of(context).pop(false); // User cancels
-                                        },
-                                        child: Text('Cancelar'),
-                                      ),
-                                      TextButton(
-                                        onPressed: () {
-                                          Navigator.of(context).pop(true); // User confirms
-                                        },
-                                        child: Text('Confirmar'),
-                                      ),
-                                    ],
-                                  );
-                                },
-                              );
+                              // Only show the confirmation dialog if enviarEncuesta is true
+                              if (enviarEncuesta) {
+                                confirmed = await showDialog(
+                                  context: context,
+                                  builder: (BuildContext context) {
+                                    return AlertDialog(
+                                      title: Text('¿Está seguro de que desea enviar la encuesta?'),
+                                      content: Text('Esta acción no es reversible.', style: TextStyle(fontSize: 18),),
+                                      actions: [
+                                        TextButton(
+                                          onPressed: () {
+                                            Navigator.of(context).pop(false); // User cancels
+                                          },
+                                          child: Text('Cancelar'),
+                                        ),
+                                        TextButton(
+                                          onPressed: () {
+                                            Navigator.of(context).pop(true); // User confirms
+                                          },
+                                          child: Text('Confirmar'),
+                                        ),
+                                      ],
+                                    );
+                                  },
+                                );
+                              }
 
                               if (!confirmed) {
                                 // If the user cancels, stop the process
@@ -437,7 +440,7 @@ class _FormsPageState extends State<FormsPage> {
                                 });
                                 return;
                               }
-            
+
                               for (var controller in activityControllers) {
                                 if (controller.text.isEmpty) {
                                   ScaffoldMessenger.of(context).showSnackBar(
@@ -453,7 +456,7 @@ class _FormsPageState extends State<FormsPage> {
                                   return; // Prevent form submission if any activityController is empty
                                 }
                               }
-            
+
                               for (var controller in projectControllers) {
                                 if (controller.text.isEmpty) {
                                   ScaffoldMessenger.of(context).showSnackBar(
@@ -469,7 +472,7 @@ class _FormsPageState extends State<FormsPage> {
                                   return; // Prevent form submission if any projectController is empty
                                 }
                               }
-            
+
                               // Check if any hoursController is empty
                               for (var controller in hoursControllers) {
                                 if (controller.text.isEmpty || controller.text == '0') {
@@ -486,7 +489,7 @@ class _FormsPageState extends State<FormsPage> {
                                   return; // Prevent form submission if any hoursController is empty
                                 }
                               }
-            
+
                               // Then, handle new projects and activities
                               for (var project in projects) {
                                 if (!projectsList.any((p) => p.name == project['projectName'])) {
@@ -495,7 +498,7 @@ class _FormsPageState extends State<FormsPage> {
                                 } else {
                                   project['project'] = projectsList.firstWhere((p) => p.name == project['projectName']).id;
                                 }
-            
+
                                 if (!activitiesList.any((a) => a.name == project['activityName'])) {
                                   // Check if activity was already created in this session
                                   toReview = true;
@@ -503,19 +506,19 @@ class _FormsPageState extends State<FormsPage> {
                                   project['activity'] = activitiesList.firstWhere((a) => a.name == project['activityName']).id;
                                 }
                               }
-            
+
                               // Print all elements of the projects list with updated IDs
                               for (var project in projects) {
                                 print("?idencuesta=${widget.idForm}&idusuario=${widget.uidUser}&proyecto=${project['project']}&actividad=${project['activity']}&horas=${project['hours']}&fecha=${DateTime.now()}");
                               }
-            
+
                               if (!toReview) {
                                 List<String> projectStrings = [];
-            
+
                                 for (var project in projects) {
                                   projectStrings.add("?idencuesta=${widget.idForm}&idusuario=${widget.uidUser}&proyecto=${project['project']}&actividad=${project['activity']}&horas=${project['hours']}&fecha=${DateTime.now()}");
                                 }
-            
+
                                 String resultString = projectStrings.join(';');
                                 print(resultString);
                                 if (enviarEncuesta) {
@@ -524,7 +527,6 @@ class _FormsPageState extends State<FormsPage> {
                                     String queryString = "?idencuesta=${widget.idForm}&idusuario=${widget.uidUser}&proyecto=${project['project']}&actividad=${project['activity']}&horas=${project['hours']}&fecha=${DateTime.now()}";
                                     var finalURI = Uri.parse(scriptURL + queryString);
                                     var response = await http.get(finalURI);
-                                    //print(finalURI);
                                     if (response.statusCode == 200) {
                                       var bodyR = convert.jsonDecode(response.body);
                                       print(bodyR);
@@ -577,6 +579,7 @@ class _FormsPageState extends State<FormsPage> {
                           },
                           child: Text(enviarEncuesta ? 'ENVIAR ENCUESTA' : 'GUARDAR ENCUESTA'),
                         ),
+
           
                       ],
                     );
