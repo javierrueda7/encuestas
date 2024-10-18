@@ -445,6 +445,38 @@ class _AddEditFormState extends State<AddEditForm> {
       return;
     }
 
+    QuerySnapshot querySnapshot = await FirebaseFirestore.instance
+        .collection('Encuestas')
+        .where('name', isEqualTo: nameController.text)
+        .get();
+
+    if (querySnapshot.docs.isNotEmpty) {
+      bool shouldSkip = false;
+      
+      // Iterate through the documents to check if doc.id matches id.widget
+      for (var doc in querySnapshot.docs) {
+        if (widget.id != null && doc.id == widget.id) {
+          shouldSkip = true;
+          break; // Exit the loop once the matching document is found
+        }
+      }
+
+      if (!shouldSkip) {
+        // Name already in use, and it's not the current document
+        setState(() {
+          isLoading = false;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('EL NOMBRE DE LA ENCUESTA YA ESTÁ EN USO.'),
+            duration: Duration(seconds: 4),
+          ),
+        );
+        return; // Exit the function if name is in use
+      }
+    }
+
+
     setState(() {
       isLoading = true; // Set loading state to true
     });
