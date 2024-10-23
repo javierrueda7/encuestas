@@ -507,11 +507,6 @@ class _FormsPageState extends State<FormsPage> {
                                 }
                               }
 
-                              // Print all elements of the projects list with updated IDs
-                              for (var project in projects) {
-                                print("?idencuesta=${widget.idForm}&idusuario=${widget.uidUser}&proyecto=${project['project']}&actividad=${project['activity']}&horas=${project['hours']}&fecha=${DateTime.now()}");
-                              }
-
                               if (!toReview) {
                                 List<String> projectStrings = [];
 
@@ -520,8 +515,8 @@ class _FormsPageState extends State<FormsPage> {
                                 }
 
                                 String resultString = projectStrings.join(';');
-                                print(resultString);
-                                if (enviarEncuesta) {
+                                bool tempEnv = enviarEncuesta;
+                                if (tempEnv) {
                                   const String scriptURL = 'https://script.google.com/macros/s/AKfycbwl1b-qt61HCxZG2QtLYNsqvmAgVQ6NRUmEGbV0SQQaL4Hl6Yh3pwF2WpNkk-EJrAlq/exec';
                                   for (var project in projects) {
                                     String queryString = "?idencuesta=${widget.idForm}&idusuario=${widget.uidUser}&proyecto=${project['project']}&actividad=${project['activity']}&horas=${project['hours']}&fecha=${DateTime.now()}";
@@ -535,13 +530,13 @@ class _FormsPageState extends State<FormsPage> {
                                 }
                                 FirebaseFirestore.instance.collection('Encuestas').doc(widget.idForm).collection('Usuarios').doc(widget.uidUser).update({
                                   'answer': resultString,
-                                  'status': enviarEncuesta ? 'ENVIADA' : 'GUARDADA',
+                                  'status': tempEnv ? 'ENVIADA' : 'GUARDADA',
                                   'date': DateTime.now(),
                                   'idencuesta': widget.idForm
                                 });
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   SnackBar(
-                                    content: Text(enviarEncuesta ? 'Encuesta enviada exitosamente.' : 'Encuesta guardada exitosamente.'),
+                                    content: Text(tempEnv ? 'Encuesta enviada exitosamente.' : 'Encuesta guardada exitosamente.'),
                                     duration: Duration(seconds: 4),
                                   ),
                                 );

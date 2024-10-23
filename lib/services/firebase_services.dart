@@ -80,7 +80,7 @@ Future<String> getFormState(String formId, String userId) async {
   if (formDoc.exists) {
     return formDoc['status'];
   } else {
-    throw Exception('Documento de encuesta no encontrado');
+    return 'NULL';
   }
 }
 
