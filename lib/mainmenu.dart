@@ -35,7 +35,7 @@ class _MainMenuState extends State<MainMenu> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Center(child: Text('CYMA - ENCUESTAS MOP')),
+        title: Center(child: Text('SISTEMA DE ENCUESTAS')),
       ),
       body: Center(
         child: Column(

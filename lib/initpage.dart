@@ -23,7 +23,7 @@ class _InitPageState extends State<InitPage> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Image.asset(
-                'assets/images/LogoCyMA.png',
+                'assets/images/imagen.jpg',
                 height: 250,
               ),
               const SizedBox(

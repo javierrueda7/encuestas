@@ -23,7 +23,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       localizationsDelegates: const [GlobalMaterialLocalizations.delegate],
       supportedLocales: const [Locale('es'), Locale('en')],
-      title: 'CYMA - ENCUESTAS MOP',
+      title: 'SISTEMA DE ENCUESTAS',
       initialRoute: '/',
       routes: {
         // '/': (context) => AutoLogin(),

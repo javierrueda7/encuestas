@@ -1,13 +1,13 @@
 {
   "project_info": {
-    "project_number": "826968691664",
-    "project_id": "forms-d51f6",
-    "storage_bucket": "forms-d51f6.appspot.com"
+    "project_number": "285269990193",
+    "project_id": "forms-66186",
+    "storage_bucket": "forms-66186.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:826968691664:android:3e9bb5fb3c84a8fa4a5fd5",
+        "mobilesdk_app_id": "1:285269990193:android:dcddf99ad6d7e000baae10",
         "android_client_info": {
           "package_name": "com.example.forms_app"
         }
@@ -15,7 +15,7 @@
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyBK555M2duBZKjhMnVja4MQ3Qsa2M6If68"
+          "current_key": "AIzaSyDIrpkSISW8GvxqnY9zc2mcVHSNSA9jmAs"
         }
       ],
       "services": {

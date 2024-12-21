@@ -58,13 +58,13 @@ class _SignInPageState extends State<SignInPage> {
                 child: Column(
                   children: <Widget>[
                     Image.asset(
-                      'assets/images/LogoCyMA.png',
+                      'assets/images/imagen.jpg',
                       height: 250,
                     ),
                     const SizedBox(
                       height: 20,
                     ),
-                    Text('SISTEMA DE ENCUESTAS MOP', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),),
+                    Text('SISTEMA DE ENCUESTAS', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),),
                     const SizedBox(
                       height: 20,
                     ),
