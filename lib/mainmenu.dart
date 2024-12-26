@@ -141,7 +141,7 @@ class _MainMenuState extends State<MainMenu> {
                     child: Text('ADMINISTRAR PROFESIONES'),
                   ),
                   Visibility(
-                    visible: role != 'USUARIO',
+                    visible: false /*role != 'USUARIO'*/,
                     child: Column(
                       children: [
                         SizedBox(height: 20),
