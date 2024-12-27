@@ -348,14 +348,14 @@ class _ListFormsScreenState extends State<ListFormsScreen> {
 
   void confirmacionEmail(BuildContext context, String id, String nameEncuesta) {
     TextEditingController emailBodyController = TextEditingController(text: '''
-      Hola, el área técnica de CyMA te invita a responder la última encuesta, presiona en el siguiente link para visitar la plataforma de Encuestas MOP.
+      Hola, el área técnica te invita a responder la última encuesta, presiona en el siguiente link para visitar la plataforma de Encuestas.
       
-      https://cyma-encuestasmop.github.io/EncuestasMOP/
+      https://javierrueda7.github.io/encuestasWeb/
       
       Si ya fue respondida, hacer caso omiso a este correo.
 
-      Cordial saludo,
-      Equipo CyMA - Encuestas MOP
+      Cordial saludo
+      
     ''');
 
     showDialog(
