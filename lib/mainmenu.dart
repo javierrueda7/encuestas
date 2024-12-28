@@ -141,14 +141,14 @@ class _MainMenuState extends State<MainMenu> {
                     child: Text('ADMINISTRAR PROFESIONES'),
                   ),
                   Visibility(
-                    visible: false /*role != 'USUARIO'*/,
+                    visible: role != 'USUARIO',
                     child: Column(
                       children: [
                         SizedBox(height: 20),
                         ElevatedButton(
                           onPressed: () {
                             html.window.open(
-                              "https://app.powerbi.com/view?r=eyJrIjoiMzBiZGZjMGYtMjJlMy00NDhiLThlODUtNmE3Mzk3NjA1MWM2IiwidCI6IjJlZDU1NzRjLWY5YmEtNDQyNi05NjU4LWU0NzdhZDc0MzlkYiIsImMiOjR9",
+                              "https://app.powerbi.com/view?r=eyJrIjoiY2E3NmZmMDEtOTlmZi00N2ZjLWJjYTMtNGJjNTA2MTNiNGM4IiwidCI6IjJlZDU1NzRjLWY5YmEtNDQyNi05NjU4LWU0NzdhZDc0MzlkYiIsImMiOjR9",
                               '_blank',
                             );
                           },
